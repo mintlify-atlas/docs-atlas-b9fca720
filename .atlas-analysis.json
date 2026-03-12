@@ -1,0 +1,141 @@
+{
+  "projectType": "frontend",
+  "projectName": "Zeal",
+  "projectDescription": "Offline documentation browser inspired by Dash for developers",
+  "theme": "palm",
+  "primaryColor": "#c54c2b",
+  "lightColor": "#2c2825",
+  "darkColor": "#d7d6d5",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "installation",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "User Guide",
+            "pages": [
+              "guides/downloading-docsets",
+              "guides/searching",
+              "guides/keyboard-shortcuts",
+              "guides/customization"
+            ]
+          },
+          {
+            "group": "Advanced",
+            "pages": [
+              "advanced/settings",
+              "advanced/command-line",
+              "advanced/creating-docsets",
+              "advanced/protocol-handlers"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Development",
+        "groups": [
+          {
+            "group": "Building",
+            "pages": [
+              "development/building",
+              "development/dependencies",
+              "development/platforms"
+            ]
+          },
+          {
+            "group": "Architecture",
+            "pages": [
+              "development/architecture/overview",
+              "development/architecture/core",
+              "development/architecture/registry",
+              "development/architecture/browser",
+              "development/architecture/ui"
+            ]
+          },
+          {
+            "group": "Contributing",
+            "pages": [
+              "development/contributing",
+              "development/code-style",
+              "development/testing"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Core",
+            "pages": [
+              "api/core/application",
+              "api/core/settings",
+              "api/core/http-server"
+            ]
+          },
+          {
+            "group": "Registry",
+            "pages": [
+              "api/registry/docset",
+              "api/registry/docset-registry",
+              "api/registry/search"
+            ]
+          },
+          {
+            "group": "Browser",
+            "pages": [
+              "api/browser/webview",
+              "api/browser/webpage",
+              "api/browser/webbridge"
+            ]
+          },
+          {
+            "group": "UI",
+            "pages": [
+              "api/ui/main-window",
+              "api/ui/settings-dialog",
+              "api/ui/search-sidebar"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Offline documentation browsing with zero internet dependency",
+    "Support for 200+ documentation sets (docsets) compatible with Dash",
+    "Fast full-text search with fuzzy matching support",
+    "Tabbed browsing interface for multiple documentation pages",
+    "Global keyboard shortcuts for quick access",
+    "Custom CSS styling for documentation appearance",
+    "Dark mode support with automatic theme detection",
+    "Protocol handlers for IDE integration (dash://, dash-plugin://)",
+    "Built with Qt for cross-platform compatibility (Windows, Linux, macOS)"
+  ],
+  "publicApiSurface": [
+    "Zeal::Core::Application - Main application controller",
+    "Zeal::Core::Settings - Configuration management",
+    "Zeal::Core::HttpServer - Local HTTP server for serving docs",
+    "Zeal::Registry::Docset - Individual documentation set",
+    "Zeal::Registry::DocsetRegistry - Docset collection manager",
+    "Zeal::Registry::SearchQuery - Search query parser",
+    "Zeal::Registry::SearchResult - Search result representation",
+    "Zeal::Browser::WebView - Documentation viewer widget",
+    "Zeal::Browser::WebPage - Custom web page with JS bridge",
+    "Zeal::Browser::WebBridge - JavaScript-C++ communication bridge",
+    "Zeal::WidgetUi::MainWindow - Main application window",
+    "Zeal::WidgetUi::SettingsDialog - Settings configuration UI",
+    "Zeal::WidgetUi::SearchSidebar - Search and navigation sidebar",
+    "dash:// protocol - Direct search URL handler",
+    "dash-plugin:// protocol - Plugin integration URL handler",
+    "zeal <query> - Command-line search interface"
+  ]
+}
