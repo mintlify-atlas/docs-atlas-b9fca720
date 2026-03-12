@@ -1,0 +1,166 @@
+---
+title: Introduction
+description: Zeal is an offline documentation browser inspired by Dash, providing instant access to 200+ API documentation sets for developers.
+---
+
+<div className="bg-[#e6e6e6] dark:bg-gray-900 -mx-8 -mt-8 mb-12 px-8 pt-12 pb-16">
+  <div className="max-w-4xl mx-auto">
+    <h1 className="text-5xl font-bold mb-4 text-[#4a4a4a] dark:text-white">
+      Offline Documentation Browser
+    </h1>
+    <p className="text-xl text-[#4a4a4a] dark:text-gray-300 mb-8">
+      Zeal is a simple offline documentation browser inspired by Dash. Access 200+ API documentation sets instantly, without an internet connection.
+    </p>
+    <div className="flex gap-4">
+      <a 
+        href="/installation" 
+        className="inline-block px-6 py-3 bg-[#6e5494] text-white font-semibold rounded hover:bg-[#5a4578] transition-colors"
+      >
+        Get Started
+      </a>
+      <a 
+        href="https://github.com/zealdocs/zeal" 
+        className="inline-block px-6 py-3 bg-transparent text-[#6e5494] border-2 border-[#6e5494] font-semibold rounded hover:bg-[#6e5494] hover:text-white transition-colors"
+      >
+        View on GitHub
+      </a>
+    </div>
+  </div>
+</div>
+
+## What is Zeal?
+
+Zeal is an offline documentation browser for software developers. It provides instant, offline access to documentation for 200+ programming languages, frameworks, and tools. Inspired by [Dash](https://kapeli.com/dash) for macOS, Zeal brings powerful documentation browsing to Windows, Linux, and macOS.
+
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/installation">
+    Download and install Zeal on your platform
+  </Card>
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Get up and running in minutes
+  </Card>
+  <Card title="User Guide" icon="book" href="/guides/downloading-docsets">
+    Learn how to use Zeal effectively
+  </Card>
+  <Card title="API Reference" icon="code" href="/api/core/application">
+    Explore the C++ API documentation
+  </Card>
+</CardGroup>
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Offline Access" icon="wifi-slash">
+    Browse documentation with zero internet dependency. All docsets are stored locally for instant access.
+  </Card>
+  <Card title="200+ Documentation Sets" icon="books">
+    Support for 200+ documentation sets (docsets) compatible with Dash, covering most popular languages and frameworks.
+  </Card>
+  <Card title="Fast Search" icon="magnifying-glass">
+    Full-text search with fuzzy matching support. Find what you need in milliseconds.
+  </Card>
+  <Card title="Tabbed Interface" icon="window-restore">
+    Browse multiple documentation pages simultaneously with a tabbed interface.
+  </Card>
+  <Card title="Global Shortcuts" icon="keyboard">
+    Access Zeal from anywhere with customizable global keyboard shortcuts.
+  </Card>
+  <Card title="IDE Integration" icon="plug">
+    Protocol handlers (dash://, dash-plugin://) enable seamless IDE integration.
+  </Card>
+  <Card title="Dark Mode" icon="moon">
+    Built-in dark mode with automatic theme detection for comfortable reading.
+  </Card>
+  <Card title="Cross-Platform" icon="desktop">
+    Built with Qt for native performance on Windows, Linux, and macOS.
+  </Card>
+</CardGroup>
+
+## How It Works
+
+Zeal uses **docsets** — compressed documentation archives that contain HTML documentation, search indexes, and metadata. These docsets are compatible with the Dash format, giving you access to a vast ecosystem of pre-built documentation sets.
+
+<Steps>
+  <Step title="Download Zeal">
+    Install Zeal on your operating system from the official downloads page or package manager.
+  </Step>
+  <Step title="Download Docsets">
+    Open Zeal and navigate to **Tools → Docsets**. Select the documentation sets you want (Python, JavaScript, C++, etc.) and download them.
+  </Step>
+  <Step title="Search and Browse">
+    Use the search bar to find documentation instantly. Press the global shortcut to access Zeal from anywhere.
+  </Step>
+</Steps>
+
+## Quick Example
+
+Search for documentation across multiple docsets:
+
+```bash
+# General search
+python:pprint
+
+# Search specific docsets
+java:BaseDAO
+
+# Search multiple docsets
+python,django:string
+```
+
+You can also launch Zeal with a query from the command line:
+
+```bash
+zeal python:pprint
+```
+
+## Platform Support
+
+Zeal is available on all major desktop platforms:
+
+- **Windows** — Installer and portable versions available
+- **Linux** — Available via package managers (APT, Flatpak, AppImage)
+- **macOS** — Homebrew and direct downloads
+
+<Note>
+  Zeal requires Qt 5.15.2 or higher and uses Qt WebEngine for rendering documentation.
+</Note>
+
+## Architecture
+
+Zeal is built with modern C++ and Qt, organized into modular components:
+
+- **Core** — Application lifecycle, settings, and HTTP server
+- **Registry** — Docset management and search indexing
+- **Browser** — WebEngine-based documentation viewer
+- **UI** — Main window, dialogs, and sidebar components
+
+Learn more in the [Architecture Overview](/development/architecture/overview).
+
+## Open Source
+
+Zeal is free and open source software licensed under [GPLv3](https://www.gnu.org/licenses/gpl-3.0.html). Contributions are welcome!
+
+<CardGroup cols={2}>
+  <Card title="Contribute" icon="code-pull-request" href="/development/contributing">
+    Learn how to contribute to Zeal
+  </Card>
+  <Card title="Build from Source" icon="hammer" href="/development/building">
+    Compile Zeal on your platform
+  </Card>
+</CardGroup>
+
+## Community and Support
+
+<CardGroup cols={3}>
+  <Card title="GitHub Issues" icon="github" href="https://github.com/zealdocs/zeal/issues">
+    Report bugs and request features
+  </Card>
+  <Card title="Discussions" icon="comments" href="https://github.com/zealdocs/zeal/discussions">
+    Ask questions and share ideas
+  </Card>
+  <Card title="IRC Channel" icon="hashtag" href="https://web.libera.chat/#zealdocs">
+    Chat on #zealdocs (Libera Chat)
+  </Card>
+</CardGroup>
+
+Follow [@zealdocs](https://twitter.com/zealdocs) on Twitter for updates, or reach out via email at support@zealdocs.org.

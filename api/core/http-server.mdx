@@ -1,0 +1,168 @@
+---
+title: HttpServer
+description: Local HTTP server for serving documentation files
+---
+
+## Overview
+
+The `Zeal::Core::HttpServer` class provides a local HTTP server for serving documentation files. It allows mounting filesystem directories to URL prefixes, enabling the browser to access local docset files via HTTP URLs. This is essential for proper rendering of documentation that uses relative paths and JavaScript.
+
+**Header:** `<core/httpserver.h>`
+
+**Namespace:** `Zeal::Core`
+
+**Backend:** Uses the [cpp-httplib](https://github.com/yhirose/cpp-httplib) library
+
+## Constructor & Destructor
+
+### HttpServer()
+
+```cpp
+explicit HttpServer(QObject *parent = nullptr)
+```
+
+Constructs the HttpServer instance and starts the server on a local port.
+
+<ParamField path="parent" type="QObject*" default="nullptr">
+  Parent QObject for memory management
+</ParamField>
+
+**Source:** src/libs/core/httpserver.h:25
+
+### ~HttpServer()
+
+```cpp
+~HttpServer() override
+```
+
+Destructor that stops the HTTP server and cleans up resources.
+
+**Source:** src/libs/core/httpserver.h:26
+
+## Public Methods
+
+### baseUrl()
+
+```cpp
+QUrl baseUrl() const
+```
+
+Returns the base URL of the HTTP server.
+
+**Returns:** QUrl object with the server's base URL (e.g., `http://127.0.0.1:8080`)
+
+**Example:**
+```cpp
+auto httpServer = Core::Application::instance()->httpServer();
+const QUrl &baseUrl = httpServer->baseUrl();
+qDebug() << "Server running at:" << baseUrl.toString();
+```
+
+**Source:** src/libs/core/httpserver.h:28
+
+### mount()
+
+```cpp
+QUrl mount(const QString &prefix, const QString &path)
+```
+
+Mounts a filesystem directory to a URL prefix, making it accessible via HTTP.
+
+<ParamField path="prefix" type="const QString&">
+  URL prefix (e.g., "python", "javascript") where the directory will be accessible
+</ParamField>
+
+<ParamField path="path" type="const QString&">
+  Absolute filesystem path to the directory to serve
+</ParamField>
+
+**Returns:** Complete QUrl where the mounted directory is accessible (baseUrl + prefix)
+
+**Example:**
+```cpp
+auto httpServer = Core::Application::instance()->httpServer();
+QUrl url = httpServer->mount("python", "/home/user/.local/share/Zeal/docsets/Python.docset/Contents/Resources/Documents");
+// url might be: http://127.0.0.1:8080/python
+```
+
+**Usage in codebase:**
+```cpp
+// From docsetregistry.cpp:133
+QUrl url = Core::Application::instance()->httpServer()->mount(name, docset->documentPath());
+```
+
+**Source:** src/libs/core/httpserver.h:30
+
+### unmount()
+
+```cpp
+bool unmount(const QString &prefix)
+```
+
+Unmounts a previously mounted directory from the specified URL prefix.
+
+<ParamField path="prefix" type="const QString&">
+  URL prefix to unmount
+</ParamField>
+
+**Returns:** `true` if the prefix was successfully unmounted, `false` if the prefix was not found
+
+**Example:**
+```cpp
+auto httpServer = Core::Application::instance()->httpServer();
+if (httpServer->unmount("python")) {
+    qDebug() << "Successfully unmounted python documentation";
+}
+```
+
+**Usage in codebase:**
+```cpp
+// From docsetregistry.cpp:151
+Core::Application::instance()->httpServer()->unmount(name);
+```
+
+**Source:** src/libs/core/httpserver.h:31
+
+## Usage Example
+
+```cpp
+// Get the HTTP server instance
+auto httpServer = Zeal::Core::Application::instance()->httpServer();
+
+// Get the base URL
+QUrl baseUrl = httpServer->baseUrl();
+qDebug() << "Server listening at:" << baseUrl.toString();
+
+// Mount a docset directory
+QString docsetName = "Python";
+QString docsetPath = "/path/to/Python.docset/Contents/Resources/Documents";
+QUrl docsetUrl = httpServer->mount(docsetName, docsetPath);
+
+// Now you can access files via HTTP:
+// http://127.0.0.1:8080/Python/index.html
+// http://127.0.0.1:8080/Python/library/functions.html
+
+// Load in a web view
+webView->load(docsetUrl.toString() + "/index.html");
+
+// Unmount when the docset is removed
+httpServer->unmount(docsetName);
+```
+
+## Implementation Details
+
+The HttpServer runs in a separate thread to avoid blocking the main Qt event loop. It:
+
+1. Starts automatically when constructed
+2. Listens on a random available local port (127.0.0.1)
+3. Serves static files from mounted directories
+4. Sanitizes URL prefixes to prevent path traversal attacks
+5. Returns appropriate HTTP status codes (200, 404, etc.)
+
+**Thread Safety:** The server runs asynchronously. Mount and unmount operations are thread-safe.
+
+## Related Classes
+
+- [Application](/api/core/application) - Provides access to the HttpServer instance via `httpServer()`
+- `Registry::DocsetRegistry` - Uses HttpServer to serve docset files
+- `Core::NetworkAccessManager` - Intercepts requests to the base URL for local serving

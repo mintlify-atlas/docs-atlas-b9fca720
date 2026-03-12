@@ -1,0 +1,383 @@
+---
+title: Search
+description: API reference for search-related classes in Zeal's Registry module
+---
+
+# Search Classes
+
+This page documents the search-related classes used for querying documentation in Zeal.
+
+## SearchQuery
+
+The `SearchQuery` class represents a parsed search query, including docset filters and the core search term.
+
+### Header
+
+```cpp
+#include <registry/searchquery.h>
+```
+
+### Namespace
+
+```cpp
+Zeal::Registry::SearchQuery
+```
+
+### Constructors
+
+#### SearchQuery() (default)
+
+```cpp
+explicit SearchQuery() = default
+```
+
+Creates an empty search query.
+
+#### SearchQuery() (with parameters)
+
+```cpp
+explicit SearchQuery(QString query, const QStringList &keywords = QStringList())
+```
+
+Creates a search query with the given query string and optional docset keywords.
+
+**Parameters:**
+- `query` - The core search query string
+- `keywords` - Optional list of docset keywords to filter by
+
+**Example:**
+```cpp
+SearchQuery query("string", {"python", "cpp"});
+// Searches for "string" in Python and C++ docsets
+```
+
+### Static Methods
+
+#### fromString()
+
+```cpp
+static SearchQuery fromString(const QString &str)
+```
+
+Parses a search query string into a SearchQuery object. The parser handles docset filters using the `:` separator.
+
+**Parameters:**
+- `str` - The query string to parse
+
+**Returns:** A SearchQuery object
+
+**Query Format:**
+
+Single separator (`:`) creates a docset filter:
+- `"android:setTypeFa"` → filters: `["android"]`, query: `"setTypeFa"`
+- `"java,android:setTypeFa"` → filters: `["java", "android"]`, query: `"setTypeFa"`
+
+Double separator (`::`) is preserved in the query:
+- `"std::string"` → filters: `[]`, query: `"std::string"`
+- `"c++:std::string"` → filters: `["c++"]`, query: `"std::string"`
+
+No prefix:
+- `"noprefix"` → filters: `[]`, query: `"noprefix"`
+- `":find"` → filters: `[]`, query: `":find"`
+
+**Example:**
+```cpp
+SearchQuery query = SearchQuery::fromString("python:list");
+qDebug() << query.hasKeywords(); // true
+qDebug() << query.keywords();    // ["python"]
+qDebug() << query.query();       // "list"
+
+// Multiple docsets
+SearchQuery multi = SearchQuery::fromString("java,android:Intent");
+qDebug() << multi.keywords();    // ["java", "android"]
+
+// Qualified names
+SearchQuery qualified = SearchQuery::fromString("c++:std::vector");
+qDebug() << qualified.query();   // "std::vector"
+```
+
+### Query Methods
+
+#### toString()
+
+```cpp
+QString toString() const
+```
+
+Converts the search query back to a string representation.
+
+**Returns:** String representation of the query
+
+#### isEmpty()
+
+```cpp
+bool isEmpty() const
+```
+
+Checks if the query is empty.
+
+**Returns:** `true` if the query has no search term
+
+#### query()
+
+```cpp
+QString query() const
+```
+
+Returns the core search query string (without docset filters).
+
+**Returns:** The query string
+
+#### setQuery()
+
+```cpp
+void setQuery(const QString &str)
+```
+
+Sets the core search query string.
+
+**Parameters:**
+- `str` - The query string to set
+
+### Keyword Methods
+
+#### keywords()
+
+```cpp
+QStringList keywords() const
+```
+
+Returns the list of docset keywords (filters) for this query.
+
+**Returns:** List of keyword strings
+
+#### setKeywords()
+
+```cpp
+void setKeywords(const QStringList &list)
+```
+
+Sets the list of docset keywords to filter by.
+
+**Parameters:**
+- `list` - The list of keywords
+
+#### hasKeywords()
+
+```cpp
+bool hasKeywords() const
+```
+
+Checks if the query has any docset filters.
+
+**Returns:** `true` if keywords are present
+
+**Example:**
+```cpp
+SearchQuery query = SearchQuery::fromString("python:list");
+if (query.hasKeywords()) {
+    qDebug() << "Filtering by:" << query.keywords();
+}
+```
+
+#### hasKeywords() (with parameter)
+
+```cpp
+bool hasKeywords(const QStringList &keywords) const
+```
+
+Checks if the query contains any of the given keywords.
+
+**Parameters:**
+- `keywords` - List of keywords to check against
+
+**Returns:** `true` if at least one keyword matches
+
+**Example:**
+```cpp
+SearchQuery query = SearchQuery::fromString("python:list");
+if (query.hasKeywords({"python", "py"})) {
+    qDebug() << "Query targets Python docset";
+}
+```
+
+#### keywordPrefixSize()
+
+```cpp
+int keywordPrefixSize() const
+```
+
+Returns the size of the docset filter prefix in the original query string.
+
+**Returns:** The character count of the prefix (e.g., `"python:"` returns 7)
+
+### Serialization
+
+SearchQuery supports Qt's data stream serialization:
+
+```cpp
+QDataStream &operator<<(QDataStream &out, const Zeal::Registry::SearchQuery &query);
+QDataStream &operator>>(QDataStream &in, Zeal::Registry::SearchQuery &query);
+```
+
+**Example:**
+```cpp
+SearchQuery query = SearchQuery::fromString("python:list");
+QByteArray data;
+QDataStream out(&data, QIODevice::WriteOnly);
+out << query;
+
+// Later...
+SearchQuery restored;
+QDataStream in(&data, QIODevice::ReadOnly);
+in >> restored;
+```
+
+---
+
+## SearchResult
+
+The `SearchResult` struct represents a single search result from a docset.
+
+### Header
+
+```cpp
+#include <registry/searchresult.h>
+```
+
+### Namespace
+
+```cpp
+Zeal::Registry::SearchResult
+```
+
+### Structure
+
+```cpp
+struct SearchResult
+{
+    QString name;
+    QString type;
+    QString urlPath;
+    QString urlFragment;
+    Docset *docset;
+    double score;
+    QVector<int> matchPositions;
+};
+```
+
+### Members
+
+#### name
+
+```cpp
+QString name
+```
+
+The name of the symbol or documentation item (e.g., `"std::string"`, `"list.append"`).
+
+#### type
+
+```cpp
+QString type
+```
+
+The type of the symbol (e.g., `"Class"`, `"Method"`, `"Function"`, `"Module"`).
+
+#### urlPath
+
+```cpp
+QString urlPath
+```
+
+The relative path to the documentation file within the docset.
+
+#### urlFragment
+
+```cpp
+QString urlFragment
+```
+
+The URL fragment (anchor) pointing to the specific section in the documentation.
+
+#### docset
+
+```cpp
+Docset *docset
+```
+
+Pointer to the docset that contains this result.
+
+#### score
+
+```cpp
+double score
+```
+
+The relevance score for this search result. Higher scores indicate better matches.
+
+#### matchPositions
+
+```cpp
+QVector<int> matchPositions
+```
+
+Positions of matched characters in the result name, used for highlighting.
+
+### Operators
+
+#### operator&lt;
+
+```cpp
+inline bool operator<(const SearchResult &other) const
+```
+
+Compares search results for sorting. Results are sorted by score (descending), then alphabetically by name.
+
+**Example:**
+```cpp
+QList<SearchResult> results = docset->search("string", token);
+std::sort(results.begin(), results.end());
+// Results are now sorted by relevance, then name
+```
+
+### Usage Example
+
+```cpp
+#include <registry/docsetregistry.h>
+#include <registry/searchquery.h>
+#include <registry/searchresult.h>
+
+// Parse the user's search input
+SearchQuery query = SearchQuery::fromString("python:list");
+
+// Search across all docsets
+DocsetRegistry registry;
+registry.search(query.toString());
+
+// Handle results
+connect(&registry, &DocsetRegistry::searchCompleted,
+        [](const QList<SearchResult> &results) {
+    for (const SearchResult &result : results) {
+        qDebug() << "Found:" << result.name
+                 << "Type:" << result.type
+                 << "Score:" << result.score
+                 << "Docset:" << result.docset->title();
+        
+        // Build the full URL
+        QUrl url = result.docset->searchResultUrl(result);
+        qDebug() << "URL:" << url.toString();
+        
+        // Highlight match positions
+        QString highlighted = result.name;
+        for (int pos : result.matchPositions) {
+            // Add highlighting markup at match positions
+        }
+    }
+});
+```
+
+## Related Classes
+
+- [Docset](/api/registry/docset) - Individual docset class that performs searches
+- [DocsetRegistry](/api/registry/docset-registry) - Registry that searches across multiple docsets

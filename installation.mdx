@@ -1,0 +1,320 @@
+---
+title: Installation
+description: Install Zeal offline documentation browser on Windows, Linux, or macOS using package managers or by building from source.
+---
+
+Zeal is available for Windows, Linux, and macOS. Choose your preferred installation method below.
+
+## System Requirements
+
+Before installing Zeal, ensure your system meets these requirements:
+
+- **Qt** version 5.15.2 or higher (Qt 6.2.0+ also supported)
+- **Qt WebEngine Widgets** module
+- **libarchive** for docset extraction
+- **SQLite** for search indexing
+- **X11 platforms only**: Qt X11 Extras and `xcb-util-keysyms`
+
+<Note>
+  Most binary distributions include all required dependencies. These requirements only matter when building from source.
+</Note>
+
+## Windows
+
+<Steps>
+  <Step title="Download the installer">
+    Download the latest Windows installer from the [official download page](https://zealdocs.org/download.html).
+    
+    Zeal provides both installer and portable versions for Windows.
+  </Step>
+  
+  <Step title="Run the installer">
+    Double-click the downloaded `.exe` file and follow the installation wizard.
+    
+    The installer will set up Zeal and create desktop shortcuts automatically.
+  </Step>
+  
+  <Step title="Launch Zeal">
+    Start Zeal from the Start menu or desktop shortcut.
+  </Step>
+</Steps>
+
+<Tip>
+  On Windows 10 and 11, Zeal automatically uses the Fusion style for proper dark mode support.
+</Tip>
+
+### Protocol Handlers (Optional)
+
+To enable `dash://` and `dash-plugin://` protocol handlers for IDE integration:
+
+```powershell
+zeal.exe --register
+```
+
+To unregister protocol handlers:
+
+```powershell
+zeal.exe --unregister
+```
+
+## Linux
+
+Zeal is available through multiple package managers and distribution formats.
+
+<CodeGroup>
+
+```bash Debian/Ubuntu (APT)
+# Install from your distribution's repository
+sudo apt update
+sudo apt install zeal
+```
+
+```bash Flatpak
+# Install from Flathub (works on any Linux distribution)
+flatpak install flathub org.zealdocs.zeal
+
+# Run Zeal
+flatpak run org.zealdocs.zeal
+```
+
+```bash AppImage
+# Download the latest AppImage from the download page
+wget https://zealdocs.org/download/zeal-latest-x86_64.AppImage
+
+# Make it executable
+chmod +x zeal-latest-x86_64.AppImage
+
+# Run Zeal
+./zeal-latest-x86_64.AppImage
+```
+
+```bash Arch Linux (AUR)
+# Install using your favorite AUR helper
+yay -S zeal
+
+# Or using paru
+paru -S zeal
+```
+
+```bash Fedora
+# Install from Fedora repositories
+sudo dnf install zeal
+```
+
+</CodeGroup>
+
+<Note>
+  The Flatpak and AppImage versions are self-contained and include all dependencies.
+</Note>
+
+## macOS
+
+Zeal can be installed on macOS using Homebrew or by downloading the binary directly.
+
+<CodeGroup>
+
+```bash Homebrew
+# Install using Homebrew
+brew install --cask zeal
+```
+
+```bash Manual Download
+# Download from the official website
+# Visit https://zealdocs.org/download.html
+# Extract and move to Applications folder
+
+mv Zeal.app /Applications/
+```
+
+</CodeGroup>
+
+## Building from Source
+
+For developers or users who want the latest features, you can build Zeal from source.
+
+<Steps>
+  <Step title="Install build dependencies">
+    Install the required build tools and libraries:
+    
+    <CodeGroup>
+    
+    ```bash Ubuntu/Debian
+    sudo apt update
+    sudo apt install build-essential cmake extra-cmake-modules \
+      libarchive-dev libsqlite3-dev ninja-build \
+      qtbase5-dev qtwebengine5-dev \
+      libqt5x11extras5-dev libxcb-keysyms1-dev
+    ```
+    
+    ```bash Fedora
+    sudo dnf install cmake extra-cmake-modules gcc-c++ ninja-build \
+      libarchive-devel sqlite-devel \
+      qt5-qtbase-devel qt5-qtwebengine-devel \
+      qt5-qtx11extras-devel xcb-util-keysyms-devel
+    ```
+    
+    ```bash macOS
+    # Install Homebrew dependencies
+    brew install cmake qt@5 libarchive sqlite
+    ```
+    
+    ```bash Windows (vcpkg)
+    # Zeal uses vcpkg for dependency management on Windows
+    # Dependencies are automatically installed during the build process
+    ```
+    
+    </CodeGroup>
+  </Step>
+  
+  <Step title="Clone the repository">
+    Clone the Zeal source code from GitHub:
+    
+    ```bash
+    git clone https://github.com/zealdocs/zeal.git
+    cd zeal
+    ```
+  </Step>
+  
+  <Step title="Configure with CMake">
+    Create a build directory and configure the project:
+    
+    ```bash
+    cmake -B build
+    ```
+    
+    <Accordion title="CMake options">
+      - `ZEAL_USE_QT5` - Force Qt 5 (default: auto-detect Qt 6, fallback to Qt 5)
+      - `ZEAL_RELEASE_BUILD` - Build as a tagged release (default: dev build)
+      - `BUILD_TESTING` - Build the testing suite (default: ON)
+      
+      Example with options:
+      ```bash
+      cmake -B build -DZEAL_USE_QT5=ON -DBUILD_TESTING=OFF
+      ```
+    </Accordion>
+  </Step>
+  
+  <Step title="Build Zeal">
+    Compile the project:
+    
+    ```bash
+    cmake --build build
+    ```
+    
+    This will compile Zeal and all its components.
+  </Step>
+  
+  <Step title="Run Zeal (optional install)">
+    You can run Zeal directly from the build directory:
+    
+    ```bash
+    ./build/bin/zeal
+    ```
+    
+    Or install it system-wide:
+    
+    ```bash
+    sudo cmake --install build
+    ```
+  </Step>
+</Steps>
+
+<Warning>
+  Development builds include a version suffix like `-dev.123+abc1234`. Only tagged releases have clean version numbers.
+</Warning>
+
+### Qt Version Support
+
+Zeal supports both Qt 5 and Qt 6:
+
+- **Qt 5**: Minimum version 5.15.2
+- **Qt 6**: Minimum version 6.2.0
+
+The build system automatically detects the available Qt version. Qt 6 is preferred if available, with fallback to Qt 5.
+
+<Tip>
+  For detailed build instructions and platform-specific notes, visit the [Zeal wiki](https://github.com/zealdocs/zeal/wiki).
+</Tip>
+
+## Verifying Installation
+
+After installation, verify Zeal is working:
+
+<CodeGroup>
+
+```bash Linux/macOS
+# Check version
+zeal --version
+
+# View help
+zeal --help
+```
+
+```powershell Windows
+# Check version
+zeal.exe --version
+
+# View help
+zeal.exe --help
+```
+
+</CodeGroup>
+
+You should see output showing the Zeal version:
+
+```
+Zeal 0.8.0
+```
+
+## Next Steps
+
+Now that Zeal is installed, learn how to use it:
+
+<CardGroup cols={2}>
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Download docsets and start searching documentation
+  </Card>
+  <Card title="Downloading Docsets" icon="download" href="/guides/downloading-docsets">
+    Learn how to download and manage documentation sets
+  </Card>
+  <Card title="Keyboard Shortcuts" icon="keyboard" href="/guides/keyboard-shortcuts">
+    Configure global shortcuts for quick access
+  </Card>
+  <Card title="Command Line Usage" icon="terminal" href="/advanced/command-line">
+    Use Zeal from the command line
+  </Card>
+</CardGroup>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Missing Qt WebEngine on Linux">
+    If Zeal fails to start with a missing Qt WebEngine error:
+    
+    ```bash
+    # Debian/Ubuntu
+    sudo apt install qtwebengine5-dev
+    
+    # Fedora
+    sudo dnf install qt5-qtwebengine
+    ```
+  </Accordion>
+  
+  <Accordion title="Build fails with CMake version error">
+    Zeal requires CMake 3.16.3 or higher:
+    
+    ```bash
+    cmake --version
+    ```
+    
+    Update CMake if necessary from [cmake.org](https://cmake.org/download/).
+  </Accordion>
+  
+  <Accordion title="Dark mode not working on Windows">
+    Zeal automatically uses the Fusion style on Windows 10/11 for dark mode support. If dark mode isn't working:
+    
+    - Ensure you're running Windows 10 or later
+    - Check Windows Settings → Personalization → Colors → Choose your mode
+    - Restart Zeal after changing Windows theme
+  </Accordion>
+</AccordionGroup>

@@ -1,0 +1,535 @@
+---
+title: Testing Guide
+description: How to write and run tests for Zeal
+---
+
+Zeal includes a test suite to ensure code quality and prevent regressions. This guide covers how to run tests, write new tests, and follow testing best practices.
+
+## Test Infrastructure
+
+Zeal uses:
+
+- **Qt Test Framework**: Qt's built-in testing framework
+- **CMake CTest**: Test runner integration
+- **GitHub Actions**: Continuous integration
+
+## Building with Tests
+
+### Enable Testing
+
+Tests are enabled by default through the `BUILD_TESTING` CMake option:
+
+```bash
+cmake -B build -DBUILD_TESTING=ON
+cmake --build build
+```
+
+To disable tests during build:
+
+```bash
+cmake -B build -DBUILD_TESTING=OFF
+cmake --build build
+```
+
+### CMake Configuration
+
+The root `CMakeLists.txt` includes:
+
+```cmake
+option(BUILD_TESTING "Build the testing suite" ON)
+if(BUILD_TESTING)
+    enable_testing()
+endif()
+```
+
+This enables the CTest infrastructure when `BUILD_TESTING` is `ON`.
+
+## Test Directory Structure
+
+Tests are organized alongside the code they test:
+
+```
+src/
+└── libs/
+    └── util/
+        ├── fuzzy.h
+        ├── fuzzy.cpp
+        ├── CMakeLists.txt
+        └── tests/
+            ├── CMakeLists.txt
+            └── fuzzy_test.cpp
+```
+
+Each test directory contains:
+
+- `CMakeLists.txt`: Test build configuration
+- `*_test.cpp`: Test implementation files
+
+## Running Tests
+
+### Run All Tests
+
+After building with tests enabled:
+
+```bash
+ctest --test-dir build
+```
+
+Or from the build directory:
+
+```bash
+cd build
+ctest
+```
+
+### Run Specific Tests
+
+Run a specific test by name:
+
+```bash
+ctest --test-dir build -R fuzzy_test
+```
+
+### Verbose Output
+
+Show detailed test output:
+
+```bash
+ctest --test-dir build --verbose
+```
+
+Or:
+
+```bash
+ctest --test-dir build --output-on-failure
+```
+
+### Run Tests Directly
+
+You can also run test executables directly:
+
+```bash
+./build/src/libs/util/tests/fuzzy_test
+```
+
+This provides more detailed Qt Test output.
+
+## Writing Tests
+
+### Test File Structure
+
+Tests use the Qt Test framework. Here's a typical test file structure:
+
+```cpp
+// Copyright (C) Oleg Shparber, et al. <https://zealdocs.org>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+#include "../fuzzy.h"
+
+#include <QtTest>
+
+using namespace Zeal::Util::Fuzzy;
+
+class FuzzyTest : public QObject
+{
+    Q_OBJECT
+
+private slots:
+    void testEmptyStrings();
+    void testExactMatch();
+    void testFuzzyMatch();
+};
+
+void FuzzyTest::testEmptyStrings()
+{
+    QCOMPARE(score(QString(), QStringLiteral("test")), 
+             -std::numeric_limits<double>::infinity());
+}
+
+void FuzzyTest::testExactMatch()
+{
+    double scoreStart = score(QStringLiteral("test"), 
+                             QStringLiteral("test"));
+    QVERIFY(scoreStart > 0);
+}
+
+void FuzzyTest::testFuzzyMatch()
+{
+    double fuzzyScore = score(QStringLiteral("abc"), 
+                             QStringLiteral("aXbXc"));
+    QVERIFY(fuzzyScore > 0);
+}
+
+QTEST_MAIN(FuzzyTest)
+#include "fuzzy_test.moc"
+```
+
+### Key Components
+
+1. **Test Class**: Inherits from `QObject` with `Q_OBJECT` macro
+2. **Test Methods**: Private slots that start with `test`
+3. **Qt Test Macros**: `QCOMPARE`, `QVERIFY`, etc.
+4. **Test Main**: `QTEST_MAIN(ClassName)` macro
+5. **Moc Include**: `#include "testfile.moc"`
+
+### CMakeLists.txt for Tests
+
+Each test directory needs a `CMakeLists.txt`:
+
+```cmake
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Test)
+
+# Create test executable
+add_executable(fuzzy_test fuzzy_test.cpp)
+
+# Link against code under test and Qt Test
+target_link_libraries(fuzzy_test PRIVATE Util Qt::Test)
+
+# Register with CTest
+add_test(NAME fuzzy_test COMMAND fuzzy_test)
+```
+
+### Qt Test Assertions
+
+Common Qt Test macros:
+
+#### QCOMPARE
+
+Compare two values for equality:
+
+```cpp
+QCOMPARE(actual, expected);
+QCOMPARE(result, 42);
+QCOMPARE(text, QStringLiteral("expected"));
+```
+
+#### QVERIFY
+
+Verify a boolean condition:
+
+```cpp
+QVERIFY(condition);
+QVERIFY(value > 0);
+QVERIFY(!list.isEmpty());
+```
+
+#### QVERIFY2
+
+Verify with a custom failure message:
+
+```cpp
+QVERIFY2(condition, "Custom error message");
+```
+
+#### QTEST
+
+Test a function with data-driven testing:
+
+```cpp
+QTEST(functionUnderTest, "parameterName");
+```
+
+#### QSKIP
+
+Skip a test conditionally:
+
+```cpp
+if (platformSpecificCondition) {
+    QSKIP("Test only valid on Windows");
+}
+```
+
+### Test Organization
+
+Organize tests into logical groups:
+
+```cpp
+class FuzzyTest : public QObject
+{
+    Q_OBJECT
+
+private slots:
+    // Basic functionality
+    void testEmptyStrings();
+    void testExactMatch();
+    void testFuzzyMatch();
+
+    // Edge cases
+    void testSingleCharacter();
+    void testNeedleLongerThanHaystack();
+    void testMaxLength();
+
+    // Regression tests
+    void testBacktrackingPrefixConflict();
+    void testBacktrackingWordBoundaryWins();
+};
+```
+
+## Testing Guidelines
+
+### Unit Tests
+
+Write focused unit tests that:
+
+- Test one component or function at a time
+- Are independent of other tests
+- Run quickly
+- Have clear, descriptive names
+- Cover both normal and edge cases
+
+### Test Coverage
+
+Aim to test:
+
+- **Happy path**: Normal, expected usage
+- **Edge cases**: Boundary conditions, empty inputs, maximum values
+- **Error cases**: Invalid inputs, null pointers, out-of-bounds
+- **Regression cases**: Previously fixed bugs
+
+### Example: Comprehensive Test Coverage
+
+```cpp
+// Happy path
+void testNormalInput();
+
+// Edge cases  
+void testEmptyString();
+void testSingleCharacter();
+void testMaximumLength();
+void testUnicodeCharacters();
+
+// Error cases
+void testNullPointer();
+void testInvalidInput();
+
+// Regression tests
+void testIssue123Fix();  // Reference the issue number
+void testCrashOnLargeInput();
+```
+
+### Test Naming
+
+Use descriptive test names that indicate what is being tested:
+
+```cpp
+// Good
+void testEmptyStrings();
+void testFuzzyMatchWithUnicode();
+void testBacktrackingPrefixConflict();
+
+// Bad
+void test1();
+void testStuff();
+void testIt();
+```
+
+### Assertions and Expectations
+
+- Use appropriate assertion macros
+- Include descriptive failure messages
+- Test exact values when possible
+- Verify both positive and negative cases
+
+```cpp
+// Test exact values
+QCOMPARE(positions.size(), 3);
+QCOMPARE(positions[0], 0);
+
+// Test conditions
+QVERIFY(score > 0);
+QVERIFY(consecutiveScore > nonConsecutiveScore);
+
+// Test infinity and NaN
+QCOMPARE(result, std::numeric_limits<double>::infinity());
+QCOMPARE(noMatch, -std::numeric_limits<double>::infinity());
+```
+
+### Test Data
+
+Use realistic test data:
+
+```cpp
+// Good - realistic data
+void testSearchQuery()
+{
+    QString needle = QStringLiteral("array");
+    QString haystack = QStringLiteral("ArrayList");
+    double score = fuzzyScore(needle, haystack);
+    QVERIFY(score > 0);
+}
+
+// Acceptable - simple data for clarity
+void testBasicMatch()
+{
+    QCOMPARE(score(QStringLiteral("abc"), 
+                   QStringLiteral("abc")), 
+             std::numeric_limits<double>::infinity());
+}
+```
+
+## Continuous Integration
+
+Zeal uses GitHub Actions for continuous integration:
+
+- Tests run automatically on all pull requests
+- Tests run on multiple platforms (Linux, Windows, macOS)
+- Build status is visible in pull requests
+
+### Build Check Workflow
+
+The `.github/workflows/build-check.yaml` workflow:
+
+- Builds Zeal on all platforms
+- Runs the full test suite
+- Reports failures to pull request authors
+
+## Debugging Tests
+
+### Run Tests in Debug Mode
+
+Build in debug mode for better debugging:
+
+```bash
+cmake -B build -DCMAKE_BUILD_TYPE=Debug
+cmake --build build
+```
+
+### Run Single Test
+
+Run a specific test directly:
+
+```bash
+./build/src/libs/util/tests/fuzzy_test
+```
+
+### Qt Test Options
+
+Qt Test supports various command-line options:
+
+```bash
+# Run specific test function
+./fuzzy_test testEmptyStrings
+
+# Verbose output
+./fuzzy_test -v2
+
+# Silent output (only failures)
+./fuzzy_test -silent
+
+# Output to file
+./fuzzy_test -o results.txt
+```
+
+### Using a Debugger
+
+Run tests under a debugger:
+
+```bash
+gdb ./build/src/libs/util/tests/fuzzy_test
+(gdb) run testEmptyStrings
+```
+
+Or with LLDB:
+
+```bash
+lldb ./build/src/libs/util/tests/fuzzy_test
+(lldb) run testEmptyStrings
+```
+
+## Adding New Tests
+
+To add a new test suite:
+
+1. **Create test directory**: `src/libs/yourmodule/tests/`
+
+2. **Write test file**: `your_test.cpp`
+
+```cpp
+#include "../yourmodule.h"
+#include <QtTest>
+
+class YourTest : public QObject
+{
+    Q_OBJECT
+
+private slots:
+    void testSomething();
+};
+
+void YourTest::testSomething()
+{
+    QVERIFY(true);
+}
+
+QTEST_MAIN(YourTest)
+#include "your_test.moc"
+```
+
+3. **Create CMakeLists.txt**:
+
+```cmake
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Test)
+
+add_executable(your_test your_test.cpp)
+target_link_libraries(your_test PRIVATE YourModule Qt::Test)
+
+add_test(NAME your_test COMMAND your_test)
+```
+
+4. **Update parent CMakeLists.txt**:
+
+```cmake
+if(BUILD_TESTING)
+    add_subdirectory(tests)
+endif()
+```
+
+5. **Build and run**:
+
+```bash
+cmake -B build
+cmake --build build
+ctest --test-dir build -R your_test
+```
+
+## Best Practices
+
+### Do:
+
+- Write tests for all new code
+- Run tests before submitting pull requests
+- Keep tests simple and focused
+- Use descriptive test names
+- Test edge cases and error conditions
+- Update tests when fixing bugs
+- Document complex test scenarios
+
+### Don't:
+
+- Skip failing tests (fix them instead)
+- Write tests that depend on external resources
+- Write tests that depend on execution order
+- Leave commented-out test code
+- Write tests that take too long to run
+- Ignore test failures in CI
+
+## Resources
+
+- [Qt Test Tutorial](https://doc.qt.io/qt-6/qtest-tutorial.html)
+- [Qt Test Overview](https://doc.qt.io/qt-6/qtest-overview.html)
+- [CMake CTest](https://cmake.org/cmake/help/latest/manual/ctest.1.html)
+- [Zeal Architecture](/development/architecture/overview)
+
+## Summary
+
+Key testing practices:
+
+- Enable tests with `BUILD_TESTING=ON`
+- Run tests with `ctest --test-dir build`
+- Write focused, independent unit tests
+- Use Qt Test framework macros (`QCOMPARE`, `QVERIFY`)
+- Test happy paths, edge cases, and error conditions
+- Include regression tests for bug fixes
+- Run tests before submitting pull requests
+
+Good tests are an investment in code quality and maintainability. When in doubt, add more tests!

@@ -1,0 +1,368 @@
+---
+title: Customization
+description: Customize Zeal's appearance and behavior to match your preferences and workflow
+---
+
+Zeal offers various customization options to tailor the documentation browsing experience to your preferences.
+
+## Accessing Preferences
+
+All customization options are available in the Preferences dialog:
+
+<Steps>
+  <Step title="Open the Edit menu">
+    Click **Edit** in the menu bar
+  </Step>
+  
+  <Step title="Select Preferences">
+    Click **Preferences** or press **Ctrl+,** (or **⌘+,** on macOS)
+  </Step>
+  
+  <Step title="Navigate between tabs">
+    Use the tabs to access different categories of settings
+  </Step>
+</Steps>
+
+## Appearance Settings
+
+Customize how documentation is displayed in Zeal.
+
+### Content Appearance (Dark Mode)
+
+Zeal supports automatic, light, and dark modes for documentation content:
+
+<Steps>
+  <Step title="Open Preferences">
+    Go to **Edit → Preferences → Content**
+  </Step>
+  
+  <Step title="Select appearance mode">
+    Choose from:
+    - **Automatic**: Matches your system theme
+    - **Light**: Always use light mode
+    - **Dark**: Always use dark mode
+  </Step>
+  
+  <Step title="Apply settings">
+    Click **Apply** or **OK**
+  </Step>
+</Steps>
+
+<Note>
+  On some Qt versions, changing the appearance mode may require restarting Zeal to take full effect.
+</Note>
+
+### Custom CSS Styling
+
+For advanced customization, you can apply your own CSS stylesheet to all documentation pages:
+
+<Steps>
+  <Step title="Create a CSS file">
+    Create a `.css` file with your custom styles. For example:
+    
+    ```css
+    body {
+      font-family: 'San Francisco', system-ui, sans-serif;
+      line-height: 1.6;
+    }
+    
+    code {
+      background-color: #f5f5f5;
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+    
+    pre {
+      background-color: #282c34;
+      color: #abb2bf;
+      padding: 16px;
+      border-radius: 6px;
+    }
+    ```
+  </Step>
+  
+  <Step title="Open Preferences">
+    Go to **Edit → Preferences → Content**
+  </Step>
+  
+  <Step title="Set custom CSS file">
+    In the **Custom CSS File** field, click the browse button and select your CSS file
+  </Step>
+  
+  <Step title="Apply and reload">
+    Click **Apply** or **OK**, then reload the current page to see your changes
+  </Step>
+</Steps>
+
+<Tip>
+  Custom CSS is applied on top of the docset's default styles. Use `!important` if you need to override specific rules.
+</Tip>
+
+<Accordion title="Example: Increase code font size">
+```css
+pre, code {
+  font-size: 14px !important;
+}
+
+pre {
+  line-height: 1.5 !important;
+}
+```
+</Accordion>
+
+<Accordion title="Example: Change link colors">
+```css
+a {
+  color: #0066cc !important;
+}
+
+a:hover {
+  color: #004499 !important;
+  text-decoration: underline;
+}
+```
+</Accordion>
+
+## Font Settings
+
+Customize the fonts used for displaying documentation.
+
+### Font Families
+
+Zeal allows you to configure different font families for different content types:
+
+<Steps>
+  <Step title="Open Content preferences">
+    Go to **Edit → Preferences → Content**
+  </Step>
+  
+  <Step title="Configure fonts">
+    Set fonts for:
+    - **Default Font**: Serif, Sans-serif, or Monospace
+    - **Serif Font**: Choose a specific serif typeface
+    - **Sans-serif Font**: Choose a specific sans-serif typeface
+    - **Fixed-width Font**: Choose a specific monospace typeface for code
+  </Step>
+  
+  <Step title="Apply settings">
+    Click **Apply** to see changes immediately
+  </Step>
+</Steps>
+
+### Font Sizes
+
+Adjust the base font sizes:
+
+| Setting | Purpose |
+|---------|----------|
+| **Default Font Size** | Base size for regular text (typically 13-16px) |
+| **Fixed Font Size** | Size for monospace/code text |
+| **Minimum Font Size** | Prevents text from being too small (0 = no minimum) |
+
+<Tip>
+  If documentation text appears too small, increase the **Default Font Size** to 14 or 15px.
+</Tip>
+
+### Smooth Scrolling
+
+Enable smooth scrolling for a more polished browsing experience:
+
+1. Go to **Edit → Preferences → Content**
+2. Check **Use smooth scrolling**
+3. Click **Apply**
+
+## External Link Policy
+
+Control what happens when you click external links in documentation:
+
+<Steps>
+  <Step title="Open Content preferences">
+    Go to **Edit → Preferences → Content**
+  </Step>
+  
+  <Step title="Choose policy">
+    Select your preferred behavior:
+    - **Ask**: Prompt before opening external links (default)
+    - **Open in Zeal**: Open external links within Zeal's browser
+    - **Open in System Browser**: Always open in your default web browser
+  </Step>
+</Steps>
+
+<CardGroup cols={3}>
+  <Card title="Ask" icon="circle-question">
+    Most secure option. You'll confirm before any external connection.
+  </Card>
+  
+  <Card title="Open in Zeal" icon="window-maximize">
+    Keeps you in the app but may not render complex web pages correctly.
+  </Card>
+  
+  <Card title="System Browser" icon="arrow-up-right-from-square">
+    Best for full web functionality but takes you out of Zeal.
+  </Card>
+</CardGroup>
+
+## Navigation Settings
+
+### Highlight on Navigate
+
+When enabled, Zeal briefly highlights the target section when navigating:
+
+1. Go to **Edit → Preferences → Content**
+2. Check **Highlight on navigate**
+3. Click **Apply**
+
+This helps you quickly locate where the page scrolled to.
+
+## Startup and System Tray
+
+### Start Minimized
+
+Configure Zeal to start minimized:
+
+1. Go to **Edit → Preferences → General**
+2. Check **Start minimized**
+3. Click **Apply**
+
+### System Tray Integration
+
+Configure system tray behavior:
+
+<Steps>
+  <Step title="Open General preferences">
+    Go to **Edit → Preferences → General**
+  </Step>
+  
+  <Step title="Enable system tray icon">
+    Check **Show system tray icon**
+  </Step>
+  
+  <Step title="Configure behavior">
+    Optionally enable:
+    - **Minimize to system tray**: Minimizing hides to tray instead of taskbar
+    - **Hide on close**: Closing the window hides to tray instead of quitting
+  </Step>
+</Steps>
+
+<Tip>
+  Using **Hide on close** with a global hotkey gives you instant access to Zeal without cluttering your taskbar.
+</Tip>
+
+## Tab Behavior
+
+### New Tab Position
+
+Control where new tabs appear:
+
+1. Go to **Edit → Preferences → Tabs**
+2. Check **Open new tabs after the current tab** to insert new tabs next to the active one
+3. Uncheck to always add new tabs at the end
+
+## Search Settings
+
+### Fuzzy Search
+
+Enable fuzzy search to find results even with typos:
+
+1. Go to **Edit → Preferences → Search**
+2. Check **Fuzzy search**
+3. Click **Apply**
+
+See the [Searching guide](/guides/searching) for more details on fuzzy search.
+
+## Docset Storage Location
+
+Change where Zeal stores downloaded docsets:
+
+<Steps>
+  <Step title="Open General preferences">
+    Go to **Edit → Preferences → General**
+  </Step>
+  
+  <Step title="Browse for location">
+    Click the browse button next to **Docset storage path**
+  </Step>
+  
+  <Step title="Select directory">
+    Choose a directory with sufficient disk space
+  </Step>
+  
+  <Step title="Restart Zeal">
+    Restart Zeal to use the new location
+  </Step>
+</Steps>
+
+<Note>
+  Changing the storage location does not move existing docsets. You'll need to manually move the `.docset` folders or re-download them.
+</Note>
+
+## Network Settings
+
+Configure proxy settings for downloading docsets:
+
+<Steps>
+  <Step title="Open Network preferences">
+    Go to **Edit → Preferences → Network**
+  </Step>
+  
+  <Step title="Select proxy type">
+    Choose from:
+    - **No proxy**: Direct connection
+    - **System proxy**: Use system proxy settings
+    - **Manual proxy**: Configure HTTP or SOCKS5 proxy
+  </Step>
+  
+  <Step title="Enter proxy details">
+    For manual proxy, enter host, port, and authentication if required
+  </Step>
+</Steps>
+
+### Ignore SSL Errors
+
+<Note>
+  **Security Warning**: Only enable this option if you understand the risks. This disables SSL certificate verification.
+</Note>
+
+If you're behind a corporate proxy with SSL inspection:
+
+1. Go to **Edit → Preferences → Network**
+2. Check **Ignore SSL errors**
+3. Click **Apply**
+
+## Updates
+
+### Automatic Update Check
+
+Enable automatic update checking:
+
+1. Go to **Edit → Preferences → General**
+2. Check **Check for updates on start**
+3. Click **Apply**
+
+Zeal will check for new versions when it starts and notify you if an update is available.
+
+## Resetting Settings
+
+If you want to reset Zeal to default settings:
+
+<Accordion title="Linux">
+  Delete the configuration file:
+  ```bash
+  rm ~/.config/Zeal/Zeal.conf
+  ```
+</Accordion>
+
+<Accordion title="macOS">
+  Delete the preferences:
+  ```bash
+  defaults delete org.zealdocs.zeal
+  ```
+</Accordion>
+
+<Accordion title="Windows">
+  Delete the registry key or configuration file (location varies by installation type).
+</Accordion>
+
+<Tip>
+  Restart Zeal after resetting settings to generate a fresh configuration with defaults.
+</Tip>

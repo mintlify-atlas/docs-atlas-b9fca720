@@ -1,0 +1,196 @@
+---
+title: Searching Documentation
+description: Master Zeal's powerful search features to quickly find the documentation you need
+---
+
+Zeal provides a fast and flexible search system that helps you find documentation across all your installed docsets.
+
+## Basic Search
+
+To search for documentation:
+
+<Steps>
+  <Step title="Focus the search box">
+    Click the search box in the sidebar or press **Ctrl+K** (or **Ctrl+L**)
+  </Step>
+  
+  <Step title="Type your query">
+    Start typing the name of a class, function, method, or keyword
+  </Step>
+  
+  <Step title="Browse results">
+    Results appear instantly as you type. Use arrow keys to navigate or click on a result
+  </Step>
+  
+  <Step title="View documentation">
+    Press **Enter** or click a result to view its documentation in the main panel
+  </Step>
+</Steps>
+
+## Search Syntax
+
+Zeal supports several search modifiers to help you find exactly what you need.
+
+### Filtering by Docset
+
+You can limit your search to specific docsets using the colon (`:`) separator:
+
+```
+docset:query
+```
+
+**Examples:**
+
+<CodeGroup>
+```text Python-specific search
+python:list
+```
+
+```text Java-specific search
+java:ArrayList
+```
+
+```text C++ search
+c++:std::string
+```
+</CodeGroup>
+
+This syntax searches only within the specified docset, making it faster and more relevant when you know which documentation you need.
+
+<Note>
+  The docset name is case-insensitive. Both `Python:list` and `python:list` work the same way.
+</Note>
+
+### Double Colon in Queries
+
+If your search term contains a double colon (`::`), it will be preserved in the search query. This is common in languages like C++, Ruby, and Perl:
+
+```text
+c++:std::vector
+```
+
+The double colon in `std::vector` is treated as part of the search term, not a separator.
+
+### Searching Multiple Docsets
+
+You can search across multiple specific docsets by separating them with commas:
+
+```
+docset1,docset2,docset3:query
+```
+
+**Examples:**
+
+<CodeGroup>
+```text Python and Django
+python,django:form
+```
+
+```text JavaScript frameworks
+javascript,react,vue:component
+```
+
+```text Android development
+java,android:intent
+```
+</CodeGroup>
+
+This searches only within the specified docsets while excluding all others.
+
+## Fuzzy Search
+
+Fuzzy search allows you to find results even with minor typos or when you don't remember the exact name.
+
+<Steps>
+  <Step title="Enable fuzzy search">
+    Go to **Edit → Preferences → Search**
+  </Step>
+  
+  <Step title="Check the option">
+    Enable **Fuzzy Search**
+  </Step>
+  
+  <Step title="Start searching">
+    Fuzzy search is now active for all queries
+  </Step>
+</Steps>
+
+### How Fuzzy Search Works
+
+With fuzzy search enabled, Zeal will match results that are similar to your query, even if they don't match exactly:
+
+- **"arlist"** might match **"ArrayList"**
+- **"strvec"** might match **"std::vector"**
+- **"setTypFa"** might match **"setTypeface"**
+
+<Tip>
+  Fuzzy search is especially helpful when you remember part of a function name but not the exact spelling or casing.
+</Tip>
+
+## Search Results
+
+Search results are organized hierarchically:
+
+- Results are grouped by docset
+- Each result shows the symbol type (class, method, function, etc.)
+- Icons indicate the type of documentation entry
+
+### Navigating Results
+
+<Accordion title="Keyboard navigation">
+  - **Up/Down arrows**: Navigate through results
+  - **Enter**: Open the selected result
+  - **Escape**: Clear search or return focus to the documentation
+</Accordion>
+
+<Accordion title="Mouse navigation">
+  - **Click**: Open a result immediately
+  - **Scroll**: Browse through long result lists
+</Accordion>
+
+## Search Tips
+
+<CardGroup cols={2}>
+  <Card title="Be specific" icon="crosshairs">
+    Use docset filters when you know which library you're looking in. This returns more relevant results faster.
+  </Card>
+  
+  <Card title="Start simple" icon="magnifying-glass">
+    Begin with a simple query and add filters if you get too many results.
+  </Card>
+  
+  <Card title="Use autocomplete" icon="keyboard">
+    Zeal suggests docset names as you type. Press Tab to autocomplete.
+  </Card>
+  
+  <Card title="No wildcards needed" icon="asterisk">
+    Zeal automatically searches for partial matches, so you don't need wildcards like `*` or `?`.
+  </Card>
+</CardGroup>
+
+## Examples
+
+Here are some practical search examples:
+
+| Query | Description |
+|-------|-------------|
+| `array` | Search for "array" in all docsets |
+| `python:list` | Search for "list" only in Python docs |
+| `c++:std::vector` | Search for `std::vector` in C++ docs |
+| `javascript,nodejs:http` | Search for "http" in JavaScript and Node.js docs |
+| `django,flask:form` | Search for "form" in Django and Flask docs |
+| `java:setTypeFa` | Fuzzy search for methods like `setTypeface` in Java |
+
+## Command Line Search
+
+You can start Zeal with a search query from the command line:
+
+```bash
+zeal python:pprint
+```
+
+This launches Zeal and immediately searches for "pprint" in the Python documentation.
+
+<Tip>
+  Command line search is great for integrating Zeal with other tools, text editors, or creating custom shortcuts.
+</Tip>

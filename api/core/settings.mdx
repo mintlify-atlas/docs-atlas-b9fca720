@@ -1,0 +1,602 @@
+---
+title: Settings
+description: Application settings and configuration management
+---
+
+## Overview
+
+The `Zeal::Core::Settings` class manages all application settings and configuration. It provides public member variables for various settings categories and methods to load/save configuration. Settings are persisted using Qt's QSettings framework.
+
+**Header:** `<core/settings.h>`
+
+**Namespace:** `Zeal::Core`
+
+## Constructor & Destructor
+
+### Settings()
+
+```cpp
+explicit Settings(QObject *parent = nullptr)
+```
+
+Constructs the Settings instance.
+
+<ParamField path="parent" type="QObject*" default="nullptr">
+  Parent QObject for memory management
+</ParamField>
+
+### ~Settings()
+
+```cpp
+~Settings() override
+```
+
+Destructor that ensures settings are saved.
+
+**Source:** src/libs/core/settings.h:109
+
+## Startup Settings
+
+### startMinimized
+
+```cpp
+bool startMinimized
+```
+
+If true, the application starts minimized to system tray or taskbar.
+
+**Type:** `bool`
+
+**Source:** src/libs/core/settings.h:26
+
+### checkForUpdate
+
+```cpp
+bool checkForUpdate
+```
+
+If true, automatically check for application updates on startup.
+
+**Type:** `bool`
+
+**Source:** src/libs/core/settings.h:27
+
+### hideMenuBar
+
+```cpp
+bool hideMenuBar
+```
+
+If true, hide the menu bar in the main window.
+
+**Type:** `bool`
+
+**Source:** src/libs/core/settings.h:28
+
+## System Tray Settings
+
+### showSystrayIcon
+
+```cpp
+bool showSystrayIcon
+```
+
+If true, display an icon in the system tray.
+
+**Type:** `bool`
+
+**Source:** src/libs/core/settings.h:32
+
+### minimizeToSystray
+
+```cpp
+bool minimizeToSystray
+```
+
+If true, minimize the window to system tray instead of taskbar.
+
+**Type:** `bool`
+
+**Source:** src/libs/core/settings.h:33
+
+### hideOnClose
+
+```cpp
+bool hideOnClose
+```
+
+If true, hide the window instead of closing the application when the close button is clicked.
+
+**Type:** `bool`
+
+**Source:** src/libs/core/settings.h:34
+
+## Global Shortcuts
+
+### showShortcut
+
+```cpp
+QKeySequence showShortcut
+```
+
+Global keyboard shortcut to show/activate the Zeal window.
+
+**Type:** `QKeySequence`
+
+**Source:** src/libs/core/settings.h:37
+
+## Tab Behavior Settings
+
+### openNewTabAfterActive
+
+```cpp
+bool openNewTabAfterActive
+```
+
+If true, open new tabs immediately after the currently active tab instead of at the end.
+
+**Type:** `bool`
+
+**Source:** src/libs/core/settings.h:41
+
+## Search Settings
+
+### isFuzzySearchEnabled
+
+```cpp
+bool isFuzzySearchEnabled
+```
+
+If true, enable fuzzy matching in search queries.
+
+**Type:** `bool`
+
+**Example:**
+```cpp
+auto settings = Core::Application::instance()->settings();
+registry->setFuzzySearchEnabled(settings->isFuzzySearchEnabled);
+```
+
+**Source:** src/libs/core/settings.h:44
+
+## Content Settings
+
+### Font Families
+
+```cpp
+QString defaultFontFamily
+QString serifFontFamily
+QString sansSerifFontFamily
+QString fixedFontFamily
+```
+
+Font family names for different text types in documentation rendering.
+
+**Type:** `QString`
+
+**Source:** src/libs/core/settings.h:47-50
+
+### Font Sizes
+
+```cpp
+int defaultFontSize
+int defaultFixedFontSize
+int minimumFontSize
+```
+
+Font sizes (in points) for documentation rendering.
+
+**Type:** `int`
+
+**Source:** src/libs/core/settings.h:52-54
+
+### externalLinkPolicy
+
+```cpp
+ExternalLinkPolicy externalLinkPolicy
+```
+
+Policy for handling external links in documentation.
+
+**Type:** `ExternalLinkPolicy`
+
+**Default:** `ExternalLinkPolicy::Ask`
+
+**See:** [ExternalLinkPolicy enum](#externallinkpolicy-enum)
+
+**Source:** src/libs/core/settings.h:62
+
+### contentAppearance
+
+```cpp
+ContentAppearance contentAppearance
+```
+
+Appearance mode for documentation content (light/dark theme).
+
+**Type:** `ContentAppearance`
+
+**Default:** `ContentAppearance::Automatic`
+
+**See:** [ContentAppearance enum](#contentappearance-enum)
+
+**Source:** src/libs/core/settings.h:70
+
+### isHighlightOnNavigateEnabled
+
+```cpp
+bool isHighlightOnNavigateEnabled
+```
+
+If true, highlight the target element when navigating to anchors.
+
+**Type:** `bool`
+
+**Source:** src/libs/core/settings.h:72
+
+### customCssFile
+
+```cpp
+QString customCssFile
+```
+
+Path to a custom CSS file to apply to documentation pages.
+
+**Type:** `QString`
+
+**Source:** src/libs/core/settings.h:73
+
+### isSmoothScrollingEnabled
+
+```cpp
+bool isSmoothScrollingEnabled
+```
+
+If true, enable smooth scrolling in documentation view.
+
+**Type:** `bool`
+
+**Source:** src/libs/core/settings.h:74
+
+## Network Settings
+
+### proxyType
+
+```cpp
+ProxyType proxyType
+```
+
+Type of network proxy to use.
+
+**Type:** `ProxyType`
+
+**Default:** `ProxyType::System`
+
+**See:** [ProxyType enum](#proxytype-enum)
+
+**Example:**
+```cpp
+switch (settings->proxyType) {
+case Settings::ProxyType::None:
+    // No proxy
+    break;
+case Settings::ProxyType::System:
+    // Use system proxy
+    break;
+case Settings::ProxyType::Http:
+case Settings::ProxyType::Socks5:
+    // Use custom proxy
+    QNetworkProxy proxy(type, settings->proxyHost, settings->proxyPort);
+    break;
+}
+```
+
+**Source:** src/libs/core/settings.h:92
+
+### proxyHost
+
+```cpp
+QString proxyHost
+```
+
+Hostname or IP address of the proxy server.
+
+**Type:** `QString`
+
+**Source:** src/libs/core/settings.h:93
+
+### proxyPort
+
+```cpp
+quint16 proxyPort
+```
+
+Port number of the proxy server.
+
+**Type:** `quint16`
+
+**Source:** src/libs/core/settings.h:94
+
+### proxyAuthenticate
+
+```cpp
+bool proxyAuthenticate
+```
+
+If true, use authentication for the proxy connection.
+
+**Type:** `bool`
+
+**Source:** src/libs/core/settings.h:95
+
+### proxyUserName
+
+```cpp
+QString proxyUserName
+```
+
+Username for proxy authentication.
+
+**Type:** `QString`
+
+**Source:** src/libs/core/settings.h:96
+
+### proxyPassword
+
+```cpp
+QString proxyPassword
+```
+
+Password for proxy authentication.
+
+**Type:** `QString`
+
+**Source:** src/libs/core/settings.h:97
+
+### isIgnoreSslErrorsEnabled
+
+```cpp
+bool isIgnoreSslErrorsEnabled
+```
+
+If true, ignore SSL certificate errors in network requests.
+
+**Type:** `bool`
+
+**Source:** src/libs/core/settings.h:98
+
+## Internal Settings
+
+### installId
+
+```cpp
+QString installId
+```
+
+Unique UUID identifying this Zeal installation. Created on first start or after settings wipe. Used exclusively for requests to *.zealdocs.org hosts and not tied to hardware or user information.
+
+**Type:** `QString`
+
+**Source:** src/libs/core/settings.h:90
+
+## Other Settings
+
+### docsetPath
+
+```cpp
+QString docsetPath
+```
+
+Directory path where docsets are stored.
+
+**Type:** `QString`
+
+**Example:**
+```cpp
+auto settings = Core::Application::instance()->settings();
+registry->setStoragePath(settings->docsetPath);
+```
+
+**Source:** src/libs/core/settings.h:101
+
+## State Settings
+
+### windowGeometry
+
+```cpp
+QByteArray windowGeometry
+```
+
+Serialized window geometry (position, size).
+
+**Type:** `QByteArray`
+
+**Source:** src/libs/core/settings.h:104
+
+### verticalSplitterGeometry
+
+```cpp
+QByteArray verticalSplitterGeometry
+```
+
+Serialized vertical splitter state.
+
+**Type:** `QByteArray`
+
+**Source:** src/libs/core/settings.h:105
+
+### tocSplitterState
+
+```cpp
+QByteArray tocSplitterState
+```
+
+Serialized table of contents splitter state.
+
+**Type:** `QByteArray`
+
+**Example:**
+```cpp
+// Restore splitter state
+m_splitter->restoreState(Core::Application::instance()->settings()->tocSplitterState);
+
+// Save splitter state
+Core::Application::instance()->settings()->tocSplitterState = m_splitter->saveState();
+```
+
+**Source:** src/libs/core/settings.h:106
+
+## Enumerations
+
+### ExternalLinkPolicy enum
+
+```cpp
+enum class ExternalLinkPolicy : unsigned int {
+    Ask = 0,
+    Open,
+    OpenInSystemBrowser
+};
+```
+
+Defines how external links in documentation should be handled.
+
+**Values:**
+- `Ask` (0): Prompt the user for each external link
+- `Open`: Open external links within Zeal
+- `OpenInSystemBrowser`: Open external links in the system default browser
+
+**Source:** src/libs/core/settings.h:56-60
+
+### ContentAppearance enum
+
+```cpp
+enum class ContentAppearance : unsigned int {
+    Automatic = 0,
+    Light,
+    Dark
+};
+```
+
+Defines the color scheme for documentation content.
+
+**Values:**
+- `Automatic` (0): Follow system color scheme
+- `Light`: Always use light theme
+- `Dark`: Always use dark theme
+
+**Source:** src/libs/core/settings.h:64-68
+
+### ProxyType enum
+
+```cpp
+enum ProxyType : unsigned int {
+    None = 0,
+    System = 1,
+    Http = 3,
+    Socks5 = 4
+};
+```
+
+Defines the type of network proxy to use.
+
+**Values:**
+- `None` (0): No proxy
+- `System` (1): Use system proxy settings
+- `Http` (3): HTTP proxy
+- `Socks5` (4): SOCKS5 proxy
+
+**Source:** src/libs/core/settings.h:77-82
+
+## Public Methods
+
+### isDarkModeEnabled()
+
+```cpp
+bool isDarkModeEnabled() const
+```
+
+Determines if dark mode should be active based on `contentAppearance` setting and system preferences.
+
+**Returns:** `true` if dark mode should be used, `false` otherwise
+
+**Source:** src/libs/core/settings.h:112
+
+### colorScheme()
+
+```cpp
+static ColorScheme colorScheme()
+```
+
+Returns the current system color scheme.
+
+**Returns:** ColorScheme enum value (Unknown, Light, or Dark)
+
+**Source:** src/libs/core/settings.h:124
+
+## Public Slots
+
+### load()
+
+```cpp
+void load()
+```
+
+Loads settings from persistent storage (QSettings).
+
+**Source:** src/libs/core/settings.h:127
+
+### save()
+
+```cpp
+void save()
+```
+
+Saves current settings to persistent storage.
+
+**Source:** src/libs/core/settings.h:128
+
+## Signals
+
+### updated()
+
+```cpp
+void updated()
+```
+
+Emitted when settings are modified and should be reapplied.
+
+**Source:** src/libs/core/settings.h:131
+
+## Usage Example
+
+```cpp
+// Access settings via Application singleton
+auto settings = Zeal::Core::Application::instance()->settings();
+
+// Check startup settings
+if (settings->startMinimized && settings->showSystrayIcon) {
+    // Start in system tray
+}
+
+// Configure search behavior
+if (settings->isFuzzySearchEnabled) {
+    registry->setFuzzySearchEnabled(true);
+}
+
+// Apply content appearance
+if (settings->isDarkModeEnabled()) {
+    applyDarkTheme();
+}
+
+// Load custom CSS if specified
+if (!settings->customCssFile.isEmpty()) {
+    loadCustomCss(settings->customCssFile);
+}
+
+// Save settings after modification
+settings->defaultFontSize = 14;
+settings->save();
+
+// Listen for settings changes
+connect(settings, &Settings::updated, this, &MyClass::onSettingsUpdated);
+```

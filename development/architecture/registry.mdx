@@ -1,0 +1,351 @@
+---
+title: Registry Component
+description: Documentation set management and search implementation
+---
+
+The Registry library manages the collection of documentation sets (docsets), provides search functionality, and handles symbol indexing.
+
+## Registry::Docset
+
+Represents a single documentation set with metadata, symbol index, and search capabilities.
+
+**Location**: `src/libs/registry/docset.h`
+
+### Docset Types
+
+From `src/libs/registry/docset.h:71-75`:
+
+```cpp
+enum class Type {
+    Invalid,
+    Dash,    // Dash-compatible docsets
+    ZDash    // Zeal-specific format
+};
+```
+
+### Public Interface
+
+```cpp
+class Docset final
+{
+public:
+    explicit Docset(QString path);
+    
+    // Metadata
+    bool isValid() const;
+    QString name() const;
+    QString title() const;
+    QStringList keywords() const;
+    QString version() const;
+    int revision() const;
+    QString feedUrl() const;
+    QString path() const;
+    QString documentPath() const;
+    
+    // Icon and visual
+    QIcon icon() const;
+    QIcon symbolTypeIcon(const QString &symbolType) const;
+    QUrl indexFileUrl() const;
+    
+    // Symbol information
+    QMap<QString, int> symbolCounts() const;
+    int symbolCount(const QString &symbolType) const;
+    const QMultiMap<QString, QUrl> &symbols(const QString &symbolType) const;
+    
+    // Search
+    QList<SearchResult> search(const QString &query, 
+                               const CancellationToken &token) const;
+    QList<SearchResult> relatedLinks(const QUrl &url) const;
+    QUrl searchResultUrl(const SearchResult &result) const;
+    
+    // Configuration
+    QUrl baseUrl() const;
+    void setBaseUrl(const QUrl &baseUrl);
+    bool isFuzzySearchEnabled() const;
+    void setFuzzySearchEnabled(bool enabled);
+    bool isJavaScriptEnabled() const;
+};
+```
+
+### Internal Data
+
+From `src/libs/registry/docset.h:87-108`:
+
+```cpp
+QString m_name;
+QString m_title;
+QStringList m_keywords;
+QString m_version;
+int m_revision = 0;
+QString m_feedUrl;
+Docset::Type m_type = Type::Invalid;
+QString m_path;
+QIcon m_icon;
+
+QUrl m_indexFileUrl;
+QString m_indexFilePath;
+
+QMultiMap<QString, QString> m_symbolStrings;
+QMap<QString, int> m_symbolCounts;
+mutable QMap<QString, QMultiMap<QString, QUrl>> m_symbols;
+Util::SQLiteDatabase *m_db = nullptr;
+
+bool m_isFuzzySearchEnabled = false;
+bool m_isJavaScriptEnabled = false;
+
+QUrl m_baseUrl;
+```
+
+### Metadata Loading
+
+Docsets use Dash-compatible format:
+
+- **Info.plist**: Property list with docset metadata
+- **meta.json**: Additional Zeal-specific metadata
+- **icon.***: Docset icon in various formats
+
+From `src/libs/registry/docset.cpp:41-51`, the Info.plist keys include:
+
+```cpp
+CFBundleName            // Docset name
+DashDocSetFamily        // Docset family
+DashDocSetKeyword       // Search keyword
+DashIndexFilePath       // Index page path
+IsJavaScriptEnabled     // JavaScript support flag
+```
+
+### SQLite Database Schema
+
+Docsets use SQLite databases for symbol storage and search. The database typically contains:
+
+- **searchIndex** table: Main symbol index with name, type, and path columns
+- Custom indexes created by Zeal for performance optimization
+
+## Registry::DocsetRegistry
+
+Manages the collection of all installed docsets.
+
+**Location**: `src/libs/registry/docsetregistry.h`
+
+### Interface
+
+```cpp
+class DocsetRegistry final : public QObject
+{
+public:
+    explicit DocsetRegistry(QObject *parent = nullptr);
+    
+    // Model for UI
+    QAbstractItemModel *model() const;
+    
+    // Configuration
+    QString storagePath() const;
+    void setStoragePath(const QString &path);
+    bool isFuzzySearchEnabled() const;
+    void setFuzzySearchEnabled(bool enabled);
+    
+    // Collection management
+    int count() const;
+    bool contains(const QString &name) const;
+    QStringList names() const;
+    void loadDocset(const QString &path);
+    void unloadDocset(const QString &name);
+    void unloadAllDocsets();
+    
+    // Access
+    Docset *docset(const QString &name) const;
+    Docset *docset(int index) const;
+    Docset *docsetForUrl(const QUrl &url);
+    QList<Docset *> docsets() const;
+    
+    // Search
+    void search(const QString &query);
+    const QList<SearchResult> &queryResults();
+    
+signals:
+    void docsetLoaded(const QString &name);
+    void docsetAboutToBeUnloaded(const QString &name);
+    void docsetUnloaded(const QString &name);
+    void searchCompleted(const QList<SearchResult> &results);
+};
+```
+
+### Internal Structure
+
+From `src/libs/registry/docsetregistry.h:66-74`:
+
+```cpp
+QAbstractItemModel *m_model = nullptr;
+QString m_storagePath;
+bool m_isFuzzySearchEnabled = false;
+QThread *m_thread = nullptr;
+QMap<QString, Docset *> m_docsets;
+CancellationToken m_cancellationToken;
+```
+
+### Search Threading
+
+Search operations can be performed asynchronously:
+
+- Uses a dedicated thread (`m_thread`) for intensive searches
+- `CancellationToken` allows canceling long-running searches
+- Results are emitted via `searchCompleted` signal
+
+## Registry::SearchQuery
+
+Parses and represents search queries with optional docset filtering.
+
+**Location**: `src/libs/registry/searchquery.h`
+
+### Query Format
+
+SearchQuery supports docset filtering using the `:` separator:
+
+```
+android:setTypeFa      → Search "setTypeFa" in Android docset
+java,android:onCreate  → Search in Java AND Android docsets
+std::string            → Search "std::string" (:: is preserved)
+:find                  → Search ":find" literally
+```
+
+From `src/libs/registry/searchquery.h:29-37`:
+
+```cpp
+// Examples:
+//   "android:setTypeFa" → docsetFilters = ["android"], coreQuery = "setTypeFa"
+//   "noprefix"          → docsetFilters = [], coreQuery = "noprefix"
+//   ":find"             → docsetFilters = [], coreQuery = ":find"
+//   "std::string"       → docsetFilters = [], coreQuery = "std::string"
+//   "c++:std::string"   → docsetFilters = ["c++"], coreQuery = "std::string"
+//   "java,android:..." → docsetFilters = ["java", "android"], coreQuery = "..."
+```
+
+### Interface
+
+```cpp
+class SearchQuery
+{
+public:
+    explicit SearchQuery() = default;
+    explicit SearchQuery(QString query, const QStringList &keywords = QStringList());
+    
+    static SearchQuery fromString(const QString &str);
+    QString toString() const;
+    bool isEmpty() const;
+    
+    QStringList keywords() const;
+    void setKeywords(const QStringList &list);
+    bool hasKeywords() const;
+    bool hasKeywords(const QStringList &keywords) const;
+    int keywordPrefixSize() const;
+    
+    QString query() const;
+    void setQuery(const QString &str);
+};
+```
+
+## Registry::SearchResult
+
+Represents a single search result with scoring and match positions.
+
+**Location**: `src/libs/registry/searchresult.h`
+
+### Structure
+
+From `src/libs/registry/searchresult.h:17-36`:
+
+```cpp
+struct SearchResult
+{
+    QString name;           // Symbol name
+    QString type;           // Symbol type (class, function, etc.)
+    
+    QString urlPath;        // Documentation page path
+    QString urlFragment;    // URL fragment/anchor
+    
+    Docset *docset;        // Parent docset
+    
+    double score;                    // Relevance score
+    QVector<int> matchPositions;     // Character positions of matches
+    
+    // Sorting by score, then alphabetically
+    inline bool operator<(const SearchResult &other) const
+    {
+        if (score == other.score)
+            return QString::compare(name, other.name, Qt::CaseInsensitive) < 0;
+        return score > other.score;
+    }
+};
+```
+
+### Scoring Algorithm
+
+Search results are scored based on:
+
+- **Exact matches**: Higher score
+- **Prefix matches**: Medium score
+- **Fuzzy matches**: Lower score with distance penalty
+- **Position of matches**: Earlier matches score higher
+
+The `Util::Fuzzy` utility (from `src/libs/util/fuzzy.h`) implements fuzzy string matching with configurable algorithms.
+
+## Search Indexing
+
+### Index Creation
+
+From `src/libs/registry/docset.cpp:36-37`, Zeal creates custom SQLite indexes:
+
+```cpp
+constexpr char IndexNamePrefix[] = "__zi_name";  // zi - Zeal index
+constexpr char IndexNameVersion[] = "0001";      // Current index version
+```
+
+Indexes are created on-demand during first search to optimize query performance.
+
+### SQLite Full-Text Search
+
+Zeal uses SQLite's FTS (Full-Text Search) capabilities:
+
+- Custom scoring function registered via `sqlite3_create_function`
+- View creation for optimized queries
+- Index management for fast symbol lookup
+
+## CancellationToken
+
+Provides a mechanism to cancel long-running search operations.
+
+**Location**: `src/libs/registry/cancellationtoken.h`
+
+Used throughout search operations to check if the user has initiated a new search, allowing early termination of outdated searches.
+
+## Database Utilities
+
+### Util::SQLiteDatabase
+
+**Location**: `src/libs/util/sqlitedatabase.h`
+
+Wrapper around SQLite C API providing:
+
+- Connection management
+- Query execution
+- Error handling
+- Resource cleanup
+
+## Symbol Types
+
+Zeal supports various symbol types from Dash docsets:
+
+- **Class/Type**: Classes, interfaces, structs
+- **Method/Function**: Functions and methods
+- **Property/Attribute**: Properties and attributes
+- **Constant**: Constants and enums
+- **Guide/Sample**: Documentation pages and guides
+- **Namespace/Module**: Namespaces and modules
+
+Each symbol type can have a custom icon defined in the docset.
+
+## See Also
+
+- [Core Component](./core.mdx) - Application foundation
+- [Browser Component](./browser.mdx) - Rendering search results
+- [UI Component](./ui.mdx) - Search interface

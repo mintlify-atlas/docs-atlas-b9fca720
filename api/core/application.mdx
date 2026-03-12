@@ -1,0 +1,395 @@
+---
+title: Application
+description: Core application class managing Zeal's lifecycle and services
+---
+
+## Overview
+
+The `Zeal::Core::Application` class is the central singleton managing Zeal's application lifecycle, settings, networking, docset registry, and other core services. It inherits from `QObject` and follows the singleton pattern.
+
+**Header:** `<core/application.h>`
+
+**Namespace:** `Zeal::Core`
+
+## Constructor & Destructor
+
+### Application()
+
+```cpp
+explicit Application(QObject *parent = nullptr)
+```
+
+Constructs the Application instance. Should only be called once as this is a singleton.
+
+<ParamField path="parent" type="QObject*" default="nullptr">
+  Parent QObject for memory management
+</ParamField>
+
+### ~Application()
+
+```cpp
+~Application() override
+```
+
+Destructor that cleans up all managed resources.
+
+## Static Methods
+
+### instance()
+
+```cpp
+static Application *instance()
+```
+
+Returns the singleton instance of the Application.
+
+**Returns:** Pointer to the Application singleton instance
+
+**Example:**
+```cpp
+auto registry = Core::Application::instance()->docsetRegistry();
+const Core::Settings *settings = Core::Application::instance()->settings();
+```
+
+**Source:** src/libs/core/application.h:40
+
+### cacheLocation()
+
+```cpp
+static QString cacheLocation()
+```
+
+Returns the directory path where Zeal stores cache data.
+
+**Returns:** Absolute path to the cache directory
+
+**Source:** src/libs/core/application.h:52
+
+### configLocation()
+
+```cpp
+static QString configLocation()
+```
+
+Returns the directory path where Zeal stores configuration files.
+
+**Returns:** Absolute path to the configuration directory
+
+**Source:** src/libs/core/application.h:53
+
+### version()
+
+```cpp
+static QVersionNumber version()
+```
+
+Returns the application version as a QVersionNumber.
+
+**Returns:** Version number object
+
+**Source:** src/libs/core/application.h:54
+
+### versionString()
+
+```cpp
+static QString versionString()
+```
+
+Returns the application version as a human-readable string.
+
+**Returns:** Version string (e.g., "0.7.0")
+
+**Source:** src/libs/core/application.h:55
+
+## Public Methods
+
+### mainWindow()
+
+```cpp
+WidgetUi::MainWindow *mainWindow() const
+```
+
+Returns the main application window.
+
+**Returns:** Pointer to the MainWindow instance
+
+**Source:** src/libs/core/application.h:42
+
+### showMainWindow()
+
+```cpp
+void showMainWindow(bool forceMinimized = false)
+```
+
+Shows the main window, optionally forcing it to start minimized.
+
+<ParamField path="forceMinimized" type="bool" default="false">
+  If true, show the window minimized regardless of settings
+</ParamField>
+
+**Source:** src/libs/core/application.h:43
+
+### networkManager()
+
+```cpp
+QNetworkAccessManager *networkManager() const
+```
+
+Returns the application's network access manager for HTTP requests.
+
+**Returns:** Pointer to the QNetworkAccessManager instance
+
+**Source:** src/libs/core/application.h:45
+
+### settings()
+
+```cpp
+Settings *settings() const
+```
+
+Returns the application settings manager.
+
+**Returns:** Pointer to the Settings instance
+
+**Example:**
+```cpp
+Core::Settings *settings = Core::Application::instance()->settings();
+if (settings->startMinimized) {
+    // Handle minimized start
+}
+```
+
+**Source:** src/libs/core/application.h:46
+
+### docsetRegistry()
+
+```cpp
+Registry::DocsetRegistry *docsetRegistry()
+```
+
+Returns the docset registry managing all documentation sets.
+
+**Returns:** Pointer to the DocsetRegistry instance
+
+**Example:**
+```cpp
+auto registry = Core::Application::instance()->docsetRegistry();
+const auto docsets = registry->docsets();
+```
+
+**Source:** src/libs/core/application.h:48
+
+### fileManager()
+
+```cpp
+FileManager *fileManager() const
+```
+
+Returns the file manager for handling file operations.
+
+**Returns:** Pointer to the FileManager instance
+
+**Source:** src/libs/core/application.h:49
+
+### httpServer()
+
+```cpp
+HttpServer *httpServer() const
+```
+
+Returns the HTTP server used to serve local documentation.
+
+**Returns:** Pointer to the HttpServer instance
+
+**Example:**
+```cpp
+QUrl url = Core::Application::instance()->httpServer()->mount(name, docset->documentPath());
+```
+
+**Source:** src/libs/core/application.h:50
+
+## Public Slots
+
+### executeQuery()
+
+```cpp
+void executeQuery(const Registry::SearchQuery &query, bool preventActivation)
+```
+
+Executes a search query in the docset registry.
+
+<ParamField path="query" type="const Registry::SearchQuery&">
+  The search query to execute
+</ParamField>
+
+<ParamField path="preventActivation" type="bool">
+  If true, prevent activating the main window
+</ParamField>
+
+**Source:** src/libs/core/application.h:58
+
+### extract()
+
+```cpp
+void extract(const QString &filePath, const QString &destination, const QString &root = QString())
+```
+
+Extracts an archive file (e.g., docset tarball) to a destination directory.
+
+<ParamField path="filePath" type="const QString&">
+  Path to the archive file to extract
+</ParamField>
+
+<ParamField path="destination" type="const QString&">
+  Directory where contents should be extracted
+</ParamField>
+
+<ParamField path="root" type="const QString&" default="QString()">
+  Optional root directory within the archive to extract from
+</ParamField>
+
+**Source:** src/libs/core/application.h:59
+
+### download()
+
+```cpp
+QNetworkReply *download(const QUrl &url)
+```
+
+Initiates a download from the specified URL.
+
+<ParamField path="url" type="const QUrl&">
+  URL to download from
+</ParamField>
+
+**Returns:** QNetworkReply object for the download operation
+
+**Source:** src/libs/core/application.h:60
+
+### checkForUpdates()
+
+```cpp
+void checkForUpdates(bool quiet = false)
+```
+
+Checks for available application updates.
+
+<ParamField path="quiet" type="bool" default="false">
+  If true, suppress UI notifications
+</ParamField>
+
+**Source:** src/libs/core/application.h:61
+
+## Signals
+
+### extractionCompleted()
+
+```cpp
+void extractionCompleted(const QString &filePath)
+```
+
+Emitted when an extraction operation completes successfully.
+
+<ParamField path="filePath" type="const QString&">
+  Path to the file that was extracted
+</ParamField>
+
+**Source:** src/libs/core/application.h:64
+
+### extractionError()
+
+```cpp
+void extractionError(const QString &filePath, const QString &errorString)
+```
+
+Emitted when an extraction operation fails.
+
+<ParamField path="filePath" type="const QString&">
+  Path to the file that failed to extract
+</ParamField>
+
+<ParamField path="errorString" type="const QString&">
+  Error message describing the failure
+</ParamField>
+
+**Source:** src/libs/core/application.h:65
+
+### extractionProgress()
+
+```cpp
+void extractionProgress(const QString &filePath, qint64 extracted, qint64 total)
+```
+
+Emitted periodically during extraction to report progress.
+
+<ParamField path="filePath" type="const QString&">
+  Path to the file being extracted
+</ParamField>
+
+<ParamField path="extracted" type="qint64">
+  Number of bytes extracted so far
+</ParamField>
+
+<ParamField path="total" type="qint64">
+  Total number of bytes to extract
+</ParamField>
+
+**Source:** src/libs/core/application.h:66
+
+### updateCheckDone()
+
+```cpp
+void updateCheckDone(const QString &version = QString())
+```
+
+Emitted when update check completes.
+
+<ParamField path="version" type="const QString&" default="QString()">
+  Available version string if an update is available, empty otherwise
+</ParamField>
+
+**Source:** src/libs/core/application.h:67
+
+### updateCheckError()
+
+```cpp
+void updateCheckError(const QString &message)
+```
+
+Emitted when update check fails.
+
+<ParamField path="message" type="const QString&">
+  Error message describing the failure
+</ParamField>
+
+**Source:** src/libs/core/application.h:68
+
+## Usage Example
+
+```cpp
+// Access the singleton instance
+auto app = Zeal::Core::Application::instance();
+
+// Get settings
+auto settings = app->settings();
+if (settings->isFuzzySearchEnabled) {
+    // Use fuzzy search
+}
+
+// Access docset registry
+auto registry = app->docsetRegistry();
+for (const auto *docset : registry->docsets()) {
+    qDebug() << docset->title();
+}
+
+// Mount documentation via HTTP server
+QUrl url = app->httpServer()->mount("python", "/path/to/docs");
+
+// Check for updates
+connect(app, &Application::updateCheckDone, [](const QString &version) {
+    if (!version.isEmpty()) {
+        qDebug() << "Update available:" << version;
+    }
+});
+app->checkForUpdates();
+```

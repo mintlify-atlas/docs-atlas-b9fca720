@@ -1,0 +1,340 @@
+---
+title: Creating Docsets
+description: Build custom documentation sets for Zeal using the Dash docset format
+---
+
+Zeal uses the Dash docset format, which allows you to create custom offline documentation for any library, framework, or programming language.
+
+## Docset Format
+
+Zeal is compatible with [Dash](https://kapeli.com/dash) docsets, which are structured bundles containing:
+
+- HTML documentation files
+- SQLite database for search indexing
+- Metadata and icons
+- Configuration files
+
+### Docset Structure
+
+A typical docset has the following structure:
+
+```
+DocsetName.docset/
+├── icon.png              # Docset icon (optional)
+├── meta.json            # Metadata (Zeal-specific)
+└── Contents/
+    ├── Info.plist       # Docset configuration
+    └── Resources/
+        ├── docSet.dsidx  # SQLite search index
+        └── Documents/    # HTML documentation files
+            └── ...
+```
+
+### Supported Database Formats
+
+Zeal supports two docset database formats:
+
+<Tabs>
+  <Tab title="Dash Format">
+    Standard Dash format using the `searchIndex` table:
+    
+    ```sql
+    CREATE TABLE searchIndex(
+      id INTEGER PRIMARY KEY,
+      name TEXT,
+      type TEXT,
+      path TEXT
+    );
+    ```
+    
+    <Note>
+      Most publicly available docsets use this format.
+    </Note>
+  </Tab>
+  <Tab title="ZDash Format">
+    Alternative format using normalized tables with fragments:
+    
+    Zeal automatically creates a view called `searchIndex` to access the data.
+    
+    This format supports URL fragments for more precise linking.
+  </Tab>
+</Tabs>
+
+## Creating Docsets
+
+To create your own docsets, follow the official **Dash Docset Generation Guide**:
+
+<Card title="Dash Docset Generation Guide" icon="book" href="https://kapeli.com/docsets">
+  Complete guide to creating Dash-compatible docsets
+</Card>
+
+The guide covers:
+- Setting up the docset structure
+- Generating the search index
+- Creating the Info.plist configuration
+- Adding icons and metadata
+
+### Quick Start
+
+1. **Create the directory structure**:
+   ```bash
+   mkdir -p MyDocset.docset/Contents/Resources/Documents
+   ```
+
+2. **Add your HTML documentation** to the `Documents/` folder
+
+3. **Create the Info.plist** file:
+   ```xml
+   <?xml version="1.0" encoding="UTF-8"?>
+   <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" 
+             "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+   <plist version="1.0">
+   <dict>
+     <key>CFBundleIdentifier</key>
+     <string>mydocset</string>
+     <key>CFBundleName</key>
+     <string>My Documentation</string>
+     <key>DocSetPlatformFamily</key>
+     <string>mydocset</string>
+     <key>isDashDocset</key>
+     <true/>
+   </dict>
+   </plist>
+   ```
+
+4. **Create the SQLite index**:
+   ```python
+   import sqlite3
+   
+   db = sqlite3.connect('MyDocset.docset/Contents/Resources/docSet.dsidx')
+   cur = db.cursor()
+   
+   cur.execute('CREATE TABLE searchIndex(id INTEGER PRIMARY KEY, name TEXT, type TEXT, path TEXT);')
+   cur.execute('CREATE UNIQUE INDEX anchor ON searchIndex (name, type, path);')
+   
+   # Add entries
+   cur.execute('INSERT INTO searchIndex(name, type, path) VALUES (?, ?, ?);',
+               ('MyClass', 'Class', 'index.html#MyClass'))
+   
+   db.commit()
+   db.close()
+   ```
+
+5. **Optional: Add metadata** (meta.json):
+   ```json
+   {
+     "name": "MyDocset",
+     "title": "My Documentation",
+     "version": "1.0.0",
+     "revision": 1
+   }
+   ```
+
+## Info.plist Configuration
+
+### Required Keys
+
+<ParamField path="CFBundleName" type="string" required>
+  Display name of the docset
+</ParamField>
+
+<ParamField path="CFBundleIdentifier" type="string" required>
+  Unique identifier for the docset
+</ParamField>
+
+### Optional Keys
+
+<ParamField path="DocSetPlatformFamily" type="string">
+  Primary keyword for filtering searches
+  
+  Example: `python`, `javascript`, `java`
+</ParamField>
+
+<ParamField path="DashDocSetKeyword" type="string">
+  Additional keyword for search filtering
+</ParamField>
+
+<ParamField path="DashDocSetPluginKeyword" type="string">
+  Plugin-specific keyword
+</ParamField>
+
+<ParamField path="dashIndexFilePath" type="string">
+  Path to the index file relative to Documents/
+  
+  Example: `index.html`
+</ParamField>
+
+<ParamField path="isJavaScriptEnabled" type="boolean" default="false">
+  Enable JavaScript execution in documentation pages
+</ParamField>
+
+<ParamField path="DashDocSetFamily" type="string">
+  Family classification (e.g., `cheatsheet`, `dashtoc`)
+</ParamField>
+
+## Entry Types
+
+Zeal recognizes the following entry types in the search index:
+
+<AccordionGroup>
+  <Accordion title="Common Types">
+    - `Class`
+    - `Method`
+    - `Function`
+    - `Constant`
+    - `Property`
+    - `Type`
+    - `Variable`
+  </Accordion>
+  <Accordion title="Object-Oriented">
+    - `Constructor`
+    - `Attribute`
+    - `Interface`
+    - `Protocol`
+    - `Struct`
+    - `Enumeration`
+  </Accordion>
+  <Accordion title="Documentation">
+    - `Guide`
+    - `Category`
+    - `Section`
+  </Accordion>
+  <Accordion title="Other">
+    - `Macro`
+    - `Event`
+    - `Field`
+    - `Operator`
+    - `Namespace`
+    - `Binding`
+  </Accordion>
+</AccordionGroup>
+
+<Info>
+  Zeal normalizes type aliases automatically. For example, `func`, `clm`, and `instm` are all mapped to their standard equivalents.
+</Info>
+
+## Docset Storage
+
+Zeal stores docsets in a platform-specific location:
+
+<Tabs>
+  <Tab title="Linux">
+    ```
+    ~/.local/share/Zeal/docsets/
+    ```
+  </Tab>
+  <Tab title="Windows">
+    ```
+    %LOCALAPPDATA%\Zeal\docsets\
+    ```
+  </Tab>
+  <Tab title="macOS">
+    ```
+    ~/Library/Application Support/Zeal/docsets/
+    ```
+  </Tab>
+  <Tab title="Portable">
+    ```
+    <application-directory>/docsets/
+    ```
+  </Tab>
+</Tabs>
+
+You can change this location in [Settings](/advanced/settings) under `docsets.path`.
+
+## Installing Docsets
+
+There are several ways to install docsets:
+
+### Via Zeal GUI
+
+1. Go to **Tools → Docsets**
+2. Select docsets from the available list
+3. Click **Download**
+
+### Manual Installation
+
+1. Download or create a `.docset` bundle
+2. Copy it to the docset storage directory
+3. Restart Zeal or reload docsets
+
+### From User Contributions
+
+The Zeal community maintains additional docsets at:
+
+<Card title="Zeal User Contributions" icon="github" href="https://github.com/Kapeli/Dash-User-Contributions">
+  Community-contributed docsets compatible with Zeal
+</Card>
+
+## Testing Your Docset
+
+1. Copy your `.docset` bundle to the docset storage directory
+2. Restart Zeal
+3. Verify the docset appears in the sidebar
+4. Test search functionality
+5. Check that icons and metadata display correctly
+
+<Tip>
+  Enable fuzzy search in settings to make finding entries easier during testing.
+</Tip>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Docset not appearing">
+    - Verify the directory structure is correct
+    - Check that `Info.plist` is valid XML
+    - Ensure `docSet.dsidx` exists and is a valid SQLite database
+    - Check Zeal's logs for errors
+  </Accordion>
+  <Accordion title="Search not working">
+    - Verify the `searchIndex` table exists
+    - Check that entries have non-empty names and paths
+    - Ensure the index is properly created
+    - Rebuild the database if needed
+  </Accordion>
+  <Accordion title="Icon not showing">
+    - Ensure `icon.png` is in the root of the `.docset` bundle
+    - Try different image formats (PNG is preferred)
+    - Check file permissions
+  </Accordion>
+</AccordionGroup>
+
+## Advanced Features
+
+### URL Fragments
+
+For the ZDash format, you can specify URL fragments for more precise linking:
+
+```sql
+INSERT INTO searchIndex(name, type, path, fragment) 
+VALUES ('myFunction', 'Function', 'api.html', 'myFunction');
+```
+
+### Keywords
+
+Support multiple search keywords by adding them to `meta.json`:
+
+```json
+{
+  "extra": {
+    "keywords": ["py", "python", "python3"]
+  }
+}
+```
+
+### Custom Index File
+
+Specify a custom index page in `meta.json`:
+
+```json
+{
+  "extra": {
+    "indexFilePath": "getting-started.html"
+  }
+}
+```
+
+<Note>
+  For more details on the docset format and advanced features, refer to the official Dash documentation.
+</Note>

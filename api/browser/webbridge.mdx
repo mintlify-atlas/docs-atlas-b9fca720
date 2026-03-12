@@ -1,0 +1,358 @@
+---
+title: 'WebBridge'
+description: 'C++ to JavaScript communication bridge using Qt WebChannel'
+---
+
+## Overview
+
+The `Zeal::Browser::WebBridge` class provides a bridge for communication between C++ code and JavaScript running in documentation pages. It uses Qt's WebChannel framework to expose C++ methods and properties to JavaScript, enabling documentation pages to interact with the Zeal application.
+
+**Header:** `src/libs/browser/webbridge.h`
+
+**Inherits:** `QObject`
+
+## Class Definition
+
+```cpp
+namespace Zeal {
+namespace Browser {
+
+class WebBridge final : public QObject
+{
+    Q_OBJECT
+    Q_DISABLE_COPY_MOVE(WebBridge)
+    Q_PROPERTY(QString AppVersion READ appVersion CONSTANT)
+public:
+    explicit WebBridge(QObject *parent = nullptr);
+
+signals:
+    void actionTriggered(const QString &action);
+
+public slots:
+    Q_INVOKABLE void openShortUrl(const QString &key);
+    Q_INVOKABLE void triggerAction(const QString &action);
+
+private:
+    QString appVersion() const;
+};
+
+} // namespace Browser
+} // namespace Zeal
+```
+
+## Properties
+
+### AppVersion
+
+```cpp
+Q_PROPERTY(QString AppVersion READ appVersion CONSTANT)
+```
+
+Read-only property that exposes the Zeal application version string to JavaScript.
+
+**Type:** `QString`
+
+**Access:** Read-only, constant
+
+**JavaScript Usage:**
+```javascript
+console.log('Running Zeal version:', zAppBridge.AppVersion);
+```
+
+## Constructor
+
+### WebBridge()
+
+```cpp
+explicit WebBridge(QObject *parent = nullptr);
+```
+
+Creates a new WebBridge instance.
+
+**Parameters:**
+- `parent` - Parent QObject (optional)
+
+## Methods
+
+### openShortUrl()
+
+```cpp
+Q_INVOKABLE void openShortUrl(const QString &key);
+```
+
+Opens a short URL in the system's default desktop browser. The URL is constructed by appending the key to `https://go.zealdocs.org/l/`.
+
+**Parameters:**
+- `key` - Short URL key to append to the base URL
+
+**Behavior:**
+- Constructs full URL: `https://go.zealdocs.org/l/{key}`
+- Opens in desktop browser via `QDesktopServices::openUrl()`
+
+**JavaScript Example:**
+```javascript
+// Open Zeal documentation
+zAppBridge.openShortUrl('docs');
+// Opens: https://go.zealdocs.org/l/docs
+
+// Open support page
+zAppBridge.openShortUrl('support');
+// Opens: https://go.zealdocs.org/l/support
+```
+
+### triggerAction()
+
+```cpp
+Q_INVOKABLE void triggerAction(const QString &action);
+```
+
+Triggers an application action from JavaScript. Emits the `actionTriggered()` signal which is connected to the main window's action handler.
+
+**Parameters:**
+- `action` - Action identifier string
+
+**Behavior:**
+- Emits `actionTriggered(action)` signal
+- Main window handles the action and performs the corresponding operation
+
+**JavaScript Example:**
+```javascript
+// Trigger application preferences dialog
+zAppBridge.triggerAction('preferences');
+
+// Trigger about dialog
+zAppBridge.triggerAction('about');
+```
+
+## Signals
+
+### actionTriggered()
+
+```cpp
+void actionTriggered(const QString &action);
+```
+
+Emitted when `triggerAction()` is called from JavaScript.
+
+**Parameters:**
+- `action` - Action identifier that was triggered
+
+**C++ Usage:**
+```cpp
+connect(webBridge, &WebBridge::actionTriggered, 
+        this, [this](const QString &action) {
+    if (action == QLatin1String("preferences")) {
+        showPreferencesDialog();
+    } else if (action == QLatin1String("about")) {
+        showAboutDialog();
+    }
+});
+```
+
+## Qt WebChannel Integration
+
+### Registration
+
+The WebBridge is registered with a QWebChannel and exposed to JavaScript through the channel:
+
+```cpp
+// C++ side - typically in MainWindow initialization
+m_webBridge = new Browser::WebBridge(this);
+
+// Register with web channel (done per tab)
+QWebChannel *channel = new QWebChannel(page);
+channel->registerObject("zAppBridge", m_webBridge);
+page->setWebChannel(channel);
+```
+
+### JavaScript Setup
+
+Documentation pages must include the Qt WebChannel JavaScript library:
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+    <script>
+        var zAppBridge;
+        
+        new QWebChannel(qt.webChannelTransport, function(channel) {
+            // Access the bridge object
+            zAppBridge = channel.objects.zAppBridge;
+            
+            // Now you can use the bridge
+            console.log('Zeal version:', zAppBridge.AppVersion);
+        });
+    </script>
+</head>
+<body>
+    <!-- Documentation content -->
+</body>
+</html>
+```
+
+## Usage Examples
+
+### Complete JavaScript Integration
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Documentation Page</title>
+    <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+</head>
+<body>
+    <div id="info"></div>
+    <button onclick="openHelp()">Open Help</button>
+    <button onclick="showPreferences()">Preferences</button>
+
+    <script>
+        var zAppBridge;
+        
+        // Initialize web channel
+        new QWebChannel(qt.webChannelTransport, function(channel) {
+            zAppBridge = channel.objects.zAppBridge;
+            
+            // Display version info
+            document.getElementById('info').textContent = 
+                'Zeal ' + zAppBridge.AppVersion;
+        });
+        
+        function openHelp() {
+            // Open short URL in browser
+            zAppBridge.openShortUrl('help');
+        }
+        
+        function showPreferences() {
+            // Trigger application action
+            zAppBridge.triggerAction('preferences');
+        }
+    </script>
+</body>
+</html>
+```
+
+### Using Promises for Asynchronous Calls
+
+Qt WebChannel methods return promises in JavaScript:
+
+```javascript
+// Method calls return promises
+zAppBridge.openShortUrl('docs').then(function() {
+    console.log('Short URL opened');
+});
+
+zAppBridge.triggerAction('about').then(function() {
+    console.log('Action triggered');
+});
+```
+
+### Reading Properties
+
+```javascript
+// Properties are accessed directly (not as functions)
+const version = zAppBridge.AppVersion;
+console.log('Running version:', version);
+
+// Properties can also be accessed in callbacks
+new QWebChannel(qt.webChannelTransport, function(channel) {
+    const bridge = channel.objects.zAppBridge;
+    
+    // Use property
+    if (bridge.AppVersion.startsWith('0.')) {
+        console.log('Development version');
+    }
+});
+```
+
+## C++ Application Integration
+
+### MainWindow Setup
+
+From mainwindow.cpp:121:
+
+```cpp
+// Create bridge instance
+m_webBridge = new Browser::WebBridge(this);
+
+// Connect action signal
+connect(m_webBridge, &Browser::WebBridge::actionTriggered, 
+        this, [this](const QString &action) {
+    // Handle actions triggered from JavaScript
+    handleWebAction(action);
+});
+
+// Register bridge with each tab
+tab->webControl()->setWebBridgeObject("zAppBridge", m_webBridge);
+```
+
+### WebControl Integration
+
+From webcontrol.cpp:82:
+
+```cpp
+void WebControl::setWebBridgeObject(const QString &name, QObject *object)
+{
+    QWebEnginePage *page = m_webView->page();
+    
+    QWebChannel *channel = new QWebChannel(page);
+    channel->registerObject(name, object);
+    
+    page->setWebChannel(channel);
+}
+```
+
+## Implementation Details
+
+### Source Files
+
+- **Header**: [src/libs/browser/webbridge.h](https://github.com/zealdocs/zeal/blob/main/src/libs/browser/webbridge.h)
+- **Implementation**: [src/libs/browser/webbridge.cpp](https://github.com/zealdocs/zeal/blob/main/src/libs/browser/webbridge.cpp)
+
+### Key Features
+
+1. **Q_INVOKABLE Macro**: Marks methods as accessible from JavaScript
+2. **Q_PROPERTY Macro**: Exposes C++ properties to JavaScript as object properties
+3. **Signal/Slot Connection**: Enables event-driven communication from JavaScript to C++
+4. **QWebChannel Transport**: Handles serialization and communication between JavaScript and C++
+
+## Best Practices
+
+### Error Handling
+
+```javascript
+// Check if bridge is available
+if (typeof zAppBridge !== 'undefined') {
+    zAppBridge.triggerAction('preferences');
+} else {
+    console.error('WebBridge not available');
+}
+```
+
+### Asynchronous Nature
+
+```javascript
+// WebChannel calls are asynchronous - use promises
+zAppBridge.openShortUrl('docs')
+    .then(() => console.log('Success'))
+    .catch(err => console.error('Error:', err));
+```
+
+### Property Access
+
+```javascript
+// Properties are accessed directly, not as function calls
+const version = zAppBridge.AppVersion;        // Correct
+const version = zAppBridge.AppVersion();      // Incorrect
+const version = zAppBridge.appVersion;        // Incorrect (case-sensitive)
+```
+
+## See Also
+
+- [WebView](/api/browser/webview) - Widget that renders the documentation
+- [WebPage](/api/browser/webpage) - Page class that hosts the WebChannel
+- [Qt WebChannel Documentation](https://doc.qt.io/qt-6/qtwebchannel-index.html)
+- [Qt WebChannel JavaScript API](https://doc.qt.io/qt-6/qtwebchannel-javascript.html)
+- Core::Application - Provides application version information

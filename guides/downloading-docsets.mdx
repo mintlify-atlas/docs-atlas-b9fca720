@@ -1,0 +1,147 @@
+---
+title: Downloading Docsets
+description: Learn how to download, update, and manage documentation sets in Zeal
+---
+
+Docsets are offline documentation packages that Zeal uses to provide searchable API documentation. Each docset contains documentation for a specific programming language, framework, or library.
+
+## What are Docsets?
+
+Docsets are structured documentation archives originally created for [Dash](https://kapeli.com/dash), the macOS documentation browser. Zeal is fully compatible with Dash docsets, giving you access to hundreds of pre-built documentation packages.
+
+Each docset includes:
+- Complete API documentation
+- Searchable index of all symbols, classes, and functions
+- Version-specific content
+- Icon and metadata
+
+## Accessing the Docset Manager
+
+To manage your docsets, open the Docset Manager dialog:
+
+<Steps>
+  <Step title="Open the Tools menu">
+    Navigate to **Tools → Docsets** in the menu bar
+  </Step>
+  
+  <Step title="Browse available docsets">
+    The dialog shows two tabs:
+    - **Installed Docsets**: Docsets you've already downloaded
+    - **Available Docsets**: All docsets you can download
+  </Step>
+</Steps>
+
+<Tip>
+  You can also access this dialog by pressing the keyboard shortcut if one is configured in your settings.
+</Tip>
+
+## Downloading Docsets
+
+<Steps>
+  <Step title="Switch to Available Docsets tab">
+    Click the **Available Docsets** tab in the Docset Manager
+  </Step>
+  
+  <Step title="Search or browse">
+    Use the filter box to search for specific docsets by name (e.g., "Python", "JavaScript", "React")
+  </Step>
+  
+  <Step title="Select docsets to download">
+    Click on a docset to select it, or use Ctrl+Click (Cmd+Click on macOS) to select multiple docsets
+  </Step>
+  
+  <Step title="Download">
+    Click the **Download** button or simply double-click a docset to start downloading immediately
+  </Step>
+</Steps>
+
+Zeal will download and install the docset automatically. Progress is shown with a progress bar for each docset.
+
+### Quick Download
+
+You can also double-click any docset in the Available list to immediately start downloading it without selecting and clicking the Download button.
+
+## Updating Docsets
+
+Docsets are periodically updated to reflect new versions of their documentation. Zeal checks for updates automatically.
+
+<Accordion title="Update a single docset">
+  1. Go to the **Installed Docsets** tab
+  2. Select the docset showing an update indicator
+  3. Click **Update Selected Docsets**
+  4. Or simply double-click the docset with an available update
+</Accordion>
+
+<Accordion title="Update all docsets at once">
+  1. Go to the **Installed Docsets** tab
+  2. Click **Update All Docsets** button
+  3. Zeal will download and install updates for all docsets that have newer versions available
+</Accordion>
+
+<Note>
+  Updates replace the existing docset entirely. Your search history and bookmarks are preserved.
+</Note>
+
+## Removing Docsets
+
+To free up disk space or remove docsets you no longer need:
+
+<Steps>
+  <Step title="Open Installed Docsets">
+    Switch to the **Installed Docsets** tab in the Docset Manager
+  </Step>
+  
+  <Step title="Select docsets to remove">
+    Click to select one or more docsets you want to remove
+  </Step>
+  
+  <Step title="Remove">
+    Click the **Remove** button
+  </Step>
+  
+  <Step title="Confirm">
+    Confirm the removal when prompted
+  </Step>
+</Steps>
+
+## Custom Docsets and Dash Feeds
+
+Zeal supports custom docsets through Dash feeds, allowing you to add documentation not available in the official repository.
+
+### Adding a Dash Feed
+
+<Steps>
+  <Step title="Get the feed URL">
+    Obtain a `dash-feed://` URL or direct feed URL from the docset provider
+  </Step>
+  
+  <Step title="Open Installed Docsets">
+    Go to the **Installed Docsets** tab
+  </Step>
+  
+  <Step title="Add Feed">
+    Click the **Add Feed** button
+  </Step>
+  
+  <Step title="Enter URL">
+    Paste the feed URL and click OK
+  </Step>
+</Steps>
+
+Zeal will fetch the feed metadata and download the docset. Custom docsets added via feeds will automatically check for updates.
+
+<Tip>
+  If you have a `dash-feed://` URL in your clipboard when you click Add Feed, Zeal will automatically populate it in the dialog.
+</Tip>
+
+## Docset Storage Location
+
+Docsets are stored in a configurable location on your system. You can change the storage path in **Edit → Preferences → General**.
+
+<Note>
+  If the docset storage location is read-only or doesn't exist, you won't be able to download, update, or remove docsets. The Docset Manager will display a warning message in this case.
+</Note>
+
+## Creating Your Own Docsets
+
+You can create custom docsets for your own documentation using the same format as Dash. Follow the [Dash docset generation guide](https://kapeli.com/docsets) for detailed instructions on creating docsets from HTML documentation.

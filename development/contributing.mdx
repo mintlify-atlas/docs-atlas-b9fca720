@@ -1,0 +1,217 @@
+---
+title: Contributing to Zeal
+description: Learn how to contribute to Zeal's development
+---
+
+We welcome contributions to Zeal! Whether you're fixing bugs, adding features, improving documentation, or helping with translations, your contributions are valuable to the project.
+
+## Getting Started
+
+Before contributing, please familiarize yourself with:
+
+- The [code style guidelines](/development/code-style)
+- The [testing guidelines](/development/testing)
+- The [project architecture](/development/architecture/overview)
+
+## Ways to Contribute
+
+### Reporting Issues
+
+Found a bug or have a feature request? Please report it on our [GitHub Issues](https://github.com/zealdocs/zeal/issues) page.
+
+When reporting a bug, please include:
+
+- Zeal version number
+- Operating system and version
+- Steps to reproduce the issue
+- Expected vs. actual behavior
+- Screenshots if applicable
+
+### Contributing Code
+
+#### Fork and Clone
+
+1. Fork the [Zeal repository](https://github.com/zealdocs/zeal) on GitHub
+2. Clone your fork locally:
+
+```bash
+git clone https://github.com/YOUR-USERNAME/zeal.git
+cd zeal
+```
+
+3. Add the upstream repository as a remote:
+
+```bash
+git remote add upstream https://github.com/zealdocs/zeal.git
+```
+
+#### Create a Branch
+
+Create a new branch for your work:
+
+```bash
+git checkout -b feature/my-new-feature
+```
+
+Use descriptive branch names:
+- `feature/add-new-feature` for new features
+- `fix/bug-description` for bug fixes
+- `docs/update-readme` for documentation changes
+- `refactor/component-name` for refactoring
+
+#### Make Your Changes
+
+1. Write clean, well-documented code following our [code style guidelines](/development/code-style)
+2. Add or update tests as needed (see [testing guidelines](/development/testing))
+3. Update documentation if you're changing functionality
+4. Keep commits focused and atomic
+
+#### Commit Your Changes
+
+Write clear, descriptive commit messages:
+
+```bash
+git add .
+git commit -m "Add feature: fuzzy search improvements"
+```
+
+Commit message guidelines:
+- Use the imperative mood ("Add feature" not "Added feature")
+- Capitalize the first letter
+- Keep the first line under 72 characters
+- Reference issue numbers when applicable (e.g., "Fix crash on startup (#123)")
+
+#### Submit a Pull Request
+
+1. Push your changes to your fork:
+
+```bash
+git push origin feature/my-new-feature
+```
+
+2. Open a pull request on GitHub from your branch to `zealdocs/zeal:main`
+3. Fill out the pull request template with:
+   - Description of changes
+   - Related issue numbers
+   - Testing performed
+   - Screenshots for UI changes
+
+4. Wait for review from maintainers
+
+#### Code Review Process
+
+The project maintainer [@trollixx](https://github.com/trollixx) (as specified in [CODEOWNERS](https://github.com/zealdocs/zeal/blob/main/.github/CODEOWNERS)) will review your pull request.
+
+During code review:
+- Be responsive to feedback
+- Make requested changes promptly
+- Ask questions if feedback is unclear
+- Be patient - reviews may take time
+
+### Contributing Documentation
+
+Documentation improvements are always welcome! You can:
+
+- Fix typos or clarify existing documentation
+- Add examples and tutorials
+- Improve API documentation
+- Translate documentation to other languages
+
+Follow the same fork, branch, and pull request workflow as code contributions.
+
+## Communication Channels
+
+Connect with the Zeal community:
+
+### GitHub
+
+- **Issues**: [github.com/zealdocs/zeal/issues](https://github.com/zealdocs/zeal/issues)
+- **Discussions**: [github.com/zealdocs/zeal/discussions](https://github.com/zealdocs/zeal/discussions)
+- **Pull Requests**: [github.com/zealdocs/zeal/pulls](https://github.com/zealdocs/zeal/pulls)
+
+### Chat
+
+- **IRC**: Join `#zealdocs` on [Libera Chat](https://web.libera.chat/#zealdocs)
+- **Gitter**: [gitter.im/zealdocs/zeal](https://gitter.im/zealdocs/zeal)
+
+### Social Media
+
+- **Twitter**: Follow [@zealdocs](https://twitter.com/zealdocs)
+- **Telegram**: [t.me/zealdocsapp](https://telegram.me/zealdocsapp)
+
+### Email
+
+For private communication, email [support@zealdocs.org](mailto:support@zealdocs.org)
+
+## Development Workflow
+
+### Keeping Your Fork Updated
+
+Regularly sync your fork with upstream:
+
+```bash
+git fetch upstream
+git checkout main
+git merge upstream/main
+git push origin main
+```
+
+### Building and Testing
+
+Before submitting your pull request:
+
+1. Build the project:
+
+```bash
+cmake -B build
+cmake --build build
+```
+
+2. Run the tests:
+
+```bash
+ctest --test-dir build
+```
+
+3. Test your changes manually
+
+See the [building](/development/building) and [testing](/development/testing) guides for more details.
+
+## Code Ownership
+
+The project uses a [CODEOWNERS](https://github.com/zealdocs/zeal/blob/main/.github/CODEOWNERS) file to automatically assign pull request reviewers. Currently, [@trollixx](https://github.com/trollixx) is the primary maintainer.
+
+## License
+
+By contributing to Zeal, you agree that your contributions will be licensed under the [GNU General Public License v3.0 or later](https://www.gnu.org/licenses/gpl-3.0.html).
+
+All source files should include the following header:
+
+```cpp
+// Copyright (C) Oleg Shparber, et al. <https://zealdocs.org>
+// SPDX-License-Identifier: GPL-3.0-or-later
+```
+
+## Project Information
+
+- **Project**: Zeal
+- **Version**: 0.8.0
+- **Author**: Oleg Shparber
+- **Copyright**: © 2013-2026 Oleg Shparber and other contributors
+- **License**: GPL-3.0-or-later
+- **Homepage**: [zealdocs.org](https://zealdocs.org)
+- **Repository**: [github.com/zealdocs/zeal](https://github.com/zealdocs/zeal)
+
+## Additional Resources
+
+- [Build instructions](/development/building)
+- [Code style guide](/development/code-style)
+- [Testing guide](/development/testing)
+- [Architecture overview](/development/architecture/overview)
+- [Project wiki](https://github.com/zealdocs/zeal/wiki)
+
+## Recognition
+
+All contributors are recognized in the project's commit history and GitHub contributors list. Significant contributions may be acknowledged in release notes.
+
+Thank you for contributing to Zeal!

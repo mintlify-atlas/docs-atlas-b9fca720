@@ -1,0 +1,336 @@
+---
+title: Dependencies
+description: Required and optional dependencies for building Zeal
+---
+
+Zeal requires several dependencies to build and run. This page lists all dependencies and how to install them.
+
+## Required Dependencies
+
+These dependencies are required to build Zeal:
+
+### CMake
+
+**Minimum Version**: 3.16.3 (3.21.0+ recommended for presets)
+
+CMake is the build system used by Zeal.
+
+<CodeGroup>
+```bash macOS (Homebrew)
+brew install cmake
+```
+
+```bash Ubuntu/Debian
+sudo apt install cmake
+```
+
+```bash Fedora
+sudo dnf install cmake
+```
+
+```bash Windows (winget)
+winget install Kitware.CMake
+```
+</CodeGroup>
+
+### Qt Framework
+
+**Minimum Version**: 5.15.2 (Qt 5) or 6.2.0 (Qt 6)
+
+Zeal supports both Qt 5 and Qt 6. Qt 6 is automatically preferred if available.
+
+#### Required Qt Modules
+
+- **Qt Concurrent**: For multi-threaded operations
+- **Qt Gui**: GUI framework foundation
+- **Qt Network**: Network access and HTTP server
+- **Qt WebEngine Core**: Web rendering engine
+- **Qt WebEngine Widgets**: Web view widgets
+- **Qt Widgets**: Widget-based UI components
+
+#### Platform-Specific Qt Modules
+
+<Note>
+  **Linux (X11 only)**: Qt X11 Extras (Qt 5) or Qt Gui Private (Qt 6.10+)
+  
+  Required for global keyboard shortcuts support.
+</Note>
+
+<CodeGroup>
+```bash macOS (Homebrew)
+brew install qt@6
+# or
+brew install qt@5
+```
+
+```bash Ubuntu/Debian (Qt 6)
+sudo apt install qt6-base-dev qt6-webengine-dev
+```
+
+```bash Ubuntu/Debian (Qt 5)
+sudo apt install qtbase5-dev qtwebengine5-dev libqt5x11extras5-dev
+```
+
+```bash Fedora (Qt 6)
+sudo dnf install qt6-qtbase-devel qt6-qtwebengine-devel
+```
+
+```bash Fedora (Qt 5)
+sudo dnf install qt5-qtbase-devel qt5-qtwebengine-devel qt5-qtx11extras-devel
+```
+</CodeGroup>
+
+<Warning>
+  Qt WebEngine Widgets is **required**. Some minimal Qt installations may not include it by default.
+</Warning>
+
+### libarchive
+
+**Purpose**: Reading compressed docset archives
+
+libarchive provides support for reading various archive formats (tar, zip, etc.).
+
+<CodeGroup>
+```bash macOS (Homebrew)
+brew install libarchive
+```
+
+```bash Ubuntu/Debian
+sudo apt install libarchive-dev
+```
+
+```bash Fedora
+sudo dnf install libarchive-devel
+```
+
+```bash Windows (vcpkg)
+vcpkg install libarchive
+```
+</CodeGroup>
+
+<Note>
+  On macOS, CMake will automatically look in Homebrew paths (`/opt/homebrew/opt/libarchive` and `/usr/local/opt/libarchive`).
+</Note>
+
+### SQLite
+
+**Purpose**: Database operations for docset metadata and search
+
+SQLite is used to read docset indexes and manage application data.
+
+<CodeGroup>
+```bash macOS (Homebrew)
+brew install sqlite
+```
+
+```bash Ubuntu/Debian
+sudo apt install libsqlite3-dev
+```
+
+```bash Fedora
+sudo dnf install sqlite-devel
+```
+
+```bash Windows (vcpkg)
+vcpkg install sqlite3
+```
+</CodeGroup>
+
+### X11 Libraries (Linux Only)
+
+On X11-based Linux systems, additional libraries are required for global shortcuts:
+
+- **libX11**: X11 client library
+- **xcb-util-keysyms**: XCB keyboard symbols library
+- **ECM**: Extra CMake Modules (for finding XCB)
+
+<CodeGroup>
+```bash Ubuntu/Debian
+sudo apt install libx11-dev libxcb-keysyms1-dev extra-cmake-modules
+```
+
+```bash Fedora
+sudo dnf install libX11-devel xcb-util-keysyms-devel extra-cmake-modules
+```
+
+```bash Arch Linux
+sudo pacman -S libx11 xcb-util-keysyms extra-cmake-modules
+```
+</CodeGroup>
+
+<Warning>
+  Without X11 support, global keyboard shortcuts will not work on Linux.
+</Warning>
+
+## Dependencies via vcpkg
+
+Zeal includes a `vcpkg.json` manifest for managing dependencies on Windows:
+
+```json vcpkg.json
+{
+  "builtin-baseline": "120deac3062162151622ca4860575a33844ba10b",
+  "dependencies": [
+    {
+      "name": "cpp-httplib",
+      "default-features": false
+    },
+    {
+      "name": "libarchive",
+      "default-features": false
+    },
+    "openssl",
+    "sqlite3",
+    "vulkan-headers"
+  ]
+}
+```
+
+### Using vcpkg
+
+<Steps>
+  <Step title="Install vcpkg">
+    Follow the [vcpkg installation guide](https://vcpkg.io/en/getting-started.html):
+    
+    ```bash
+    git clone https://github.com/microsoft/vcpkg.git
+    cd vcpkg
+    .\bootstrap-vcpkg.bat  # Windows
+    ./bootstrap-vcpkg.sh   # Linux/macOS
+    ```
+  </Step>
+  
+  <Step title="Set environment variable">
+    ```bash Windows (PowerShell)
+    $env:VCPKG_ROOT="C:\path\to\vcpkg"
+    ```
+    
+    ```bash Linux/macOS
+    export VCPKG_ROOT=/path/to/vcpkg
+    ```
+  </Step>
+  
+  <Step title="Configure with vcpkg">
+    ```bash
+    cmake --preset ninja-multi-vcpkg
+    ```
+    
+    vcpkg will automatically install the dependencies listed in `vcpkg.json`.
+  </Step>
+</Steps>
+
+<Note>
+  Qt must still be installed separately. vcpkg does not provide Qt in Zeal's configuration.
+</Note>
+
+## Optional Dependencies
+
+### cpp-httplib
+
+**Purpose**: HTTP server for local API
+
+Zeal can use either the system-installed cpp-httplib or a bundled version.
+
+```bash
+# vcpkg (recommended on Windows)
+vcpkg install cpp-httplib
+
+# Or let CMake use the bundled version
+# (no action needed - automatic fallback)
+```
+
+<Note>
+  Zeal includes a bundled copy of cpp-httplib in `src/contrib/`. CMake will use it automatically if the system version is not found.
+</Note>
+
+### OpenSSL
+
+**Purpose**: HTTPS support in Qt WebEngine
+
+Required for secure connections when viewing documentation.
+
+<CodeGroup>
+```bash Windows (vcpkg)
+vcpkg install openssl
+```
+
+```bash macOS (Homebrew)
+brew install openssl
+```
+
+```bash Ubuntu/Debian
+sudo apt install libssl-dev
+```
+</CodeGroup>
+
+### Vulkan Headers
+
+**Purpose**: GPU acceleration in Qt WebEngine
+
+Improves rendering performance.
+
+```bash Windows (vcpkg)
+vcpkg install vulkan-headers
+```
+
+<Note>
+  On Linux and macOS, Vulkan headers are typically included with graphics drivers or Qt WebEngine dependencies.
+</Note>
+
+## Build Tool Dependencies
+
+### Ninja (Optional but Recommended)
+
+Ninja provides faster builds than Make.
+
+<CodeGroup>
+```bash macOS (Homebrew)
+brew install ninja
+```
+
+```bash Ubuntu/Debian
+sudo apt install ninja-build
+```
+
+```bash Fedora
+sudo dnf install ninja-build
+```
+
+```bash Windows (winget)
+winget install Ninja-build.Ninja
+```
+</CodeGroup>
+
+### Compiler Requirements
+
+Zeal requires a C++17-compatible compiler:
+
+- **GCC**: 7.0+
+- **Clang**: 5.0+
+- **MSVC**: 2017 (15.7)+
+
+## Dependency Summary Table
+
+| Dependency | Minimum Version | Purpose | Required On |
+|------------|----------------|---------|-------------|
+| CMake | 3.16.3 | Build system | All platforms |
+| Qt | 5.15.2 / 6.2.0 | GUI framework | All platforms |
+| libarchive | Any | Archive extraction | All platforms |
+| SQLite | Any | Database operations | All platforms |
+| libX11 | Any | X11 integration | Linux (X11) |
+| xcb-util-keysyms | Any | Keyboard shortcuts | Linux (X11) |
+| Qt X11 Extras | 5.15.2+ | X11 integration | Linux (Qt 5 + X11) |
+| ECM | Any | CMake modules | Linux (X11) |
+| OpenSSL | Any | HTTPS support | All platforms (optional) |
+| cpp-httplib | Any | HTTP server | All platforms (bundled fallback) |
+| Vulkan headers | Any | GPU acceleration | All platforms (optional) |
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Building Zeal" icon="hammer" href="/development/building">
+    Learn how to build Zeal with these dependencies
+  </Card>
+  <Card title="Platform Notes" icon="computer" href="/development/platforms">
+    Platform-specific dependency installation tips
+  </Card>
+</CardGroup>

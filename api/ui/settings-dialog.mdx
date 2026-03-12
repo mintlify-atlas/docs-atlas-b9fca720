@@ -1,0 +1,290 @@
+---
+title: "SettingsDialog"
+description: "Application settings dialog for configuring Zeal preferences"
+icon: "gear"
+---
+
+## Overview
+
+The `SettingsDialog` class (`Zeal::WidgetUi::SettingsDialog`) provides a dialog interface for configuring Zeal application settings. It inherits from `QDialog` and uses a UI file for layout definition.
+
+**Header:** `src/libs/ui/settingsdialog.h`
+
+**Namespace:** `Zeal::WidgetUi`
+
+## Constructor
+
+```cpp
+explicit SettingsDialog(QWidget *parent = nullptr);
+```
+
+Creates the settings dialog with the given parent widget.
+
+**Parameters:**
+- `parent` - Optional parent widget (defaults to nullptr)
+
+**Behavior:**
+- Sets up UI from `settingsdialog.ui` file
+- Removes context help button from window flags
+- Connects dialog buttons (OK, Cancel, Apply) to appropriate slots
+- Populates font selection combo boxes
+- Configures available font sizes
+- Disables global shortcut settings if not supported on the platform
+- Sets up live preview for web settings
+- Loads current settings into UI controls
+
+**Reference:** `src/libs/ui/settingsdialog.cpp:32`
+
+## Destructor
+
+```cpp
+~SettingsDialog() override;
+```
+
+Cleans up the UI object.
+
+## Public Slots
+
+### chooseCustomCssFile
+
+```cpp
+void chooseCustomCssFile();
+```
+
+Opens a file dialog for selecting a custom CSS file.
+
+**Behavior:**
+- Opens file dialog filtered for CSS files
+- Updates the custom CSS file path in the UI
+- Converts path to native separators for display
+
+**Reference:** `src/libs/ui/settingsdialog.cpp:124`
+
+### chooseDocsetStoragePath
+
+```cpp
+void chooseDocsetStoragePath();
+```
+
+Opens a directory dialog for selecting the docset storage location.
+
+**Behavior:**
+- Opens directory selection dialog
+- For portable builds, converts to relative path if within application directory
+- Updates the docset storage path in the UI
+- Converts path to native separators for display
+
+**Reference:** `src/libs/ui/settingsdialog.cpp:135`
+
+## Private Methods
+
+### loadSettings
+
+```cpp
+void loadSettings();
+```
+
+Loads current application settings into the dialog UI controls.
+
+**Settings Loaded:**
+
+#### General Tab
+- Start minimized checkbox
+- Check for updates checkbox
+- System tray icon group (show, minimize to tray, hide on close)
+- Global hotkey sequence
+- Docset storage path
+
+#### Tabs Tab
+- Open new tab after active checkbox
+
+#### Search Tab
+- Fuzzy search enabled checkbox
+
+#### Content Tab
+- Default font family (Serif, Sans-serif, or Monospace)
+- Serif, Sans-serif, and Fixed font selections
+- Default, fixed, and minimum font sizes
+- Content appearance (Automatic, Light, or Dark)
+- Highlight on navigate checkbox
+- Custom CSS file path
+- External link policy (Ask, Open, or Open in System Browser)
+- Smooth scrolling checkbox
+
+#### Network Tab
+- Proxy type (None, System, HTTP, or SOCKS5)
+- Proxy host and port
+- Proxy authentication settings
+- Ignore SSL errors checkbox
+
+**Reference:** `src/libs/ui/settingsdialog.cpp:154`
+
+### saveSettings
+
+```cpp
+void saveSettings();
+```
+
+Saves the dialog UI control values to application settings.
+
+**Behavior:**
+- Reads all UI control values
+- Updates corresponding `Core::Settings` properties
+- Calls `settings->save()` to persist changes
+- Triggers settings update signal for live application of changes
+
+**Special Notes:**
+- On Qt versions before 6.7, displays a note that appearance changes require restart
+- Automatically converts between UI data types and settings types
+- Handles enum conversions for appearance, link policy, and proxy types
+
+**Reference:** `src/libs/ui/settingsdialog.cpp:247`
+
+## Settings Organization
+
+The dialog is organized into multiple tabs, each corresponding to a settings category:
+
+### General Tab
+
+Application behavior settings:
+- **Start Minimized:** Launch application minimized
+- **Check for Updates:** Automatically check for new Zeal versions
+- **System Tray Icon:** Enable system tray integration
+  - Minimize to system tray
+  - Hide on close instead of quit
+- **Global Hotkey:** Keyboard shortcut to show/hide Zeal
+- **Docset Storage:** Directory where docsets are stored
+
+### Tabs Tab
+
+Tab behavior settings:
+- **Open New Tab After Active:** Insert new tabs after current tab instead of at the end
+
+### Search Tab
+
+Search behavior settings:
+- **Fuzzy Search:** Enable fuzzy matching in searches
+
+### Content Tab
+
+Documentation display settings:
+- **Default Font:** Choose between Serif, Sans-serif, or Monospace
+- **Font Families:** Specific font selections for each family
+- **Font Sizes:** Default, fixed, and minimum font sizes
+- **Appearance:** Theme selection (Automatic, Light, or Dark)
+- **Highlight on Navigate:** Enable text highlighting when navigating
+- **Custom CSS:** Apply custom stylesheet to documentation
+- **External Links:** How to handle external links
+- **Smooth Scrolling:** Enable smooth scrolling in documentation
+
+### Network Tab
+
+Network and proxy settings:
+- **Proxy Type:** None, System, HTTP, or SOCKS5
+- **Proxy Configuration:** Host, port, and authentication
+- **SSL Errors:** Option to ignore SSL certificate errors
+
+## Font Configuration
+
+The dialog provides comprehensive font customization:
+
+### Available Font Sizes
+
+Predefined sizes: 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 40, 44, 48, 56, 64, 72 pixels
+
+**Reference:** `src/libs/ui/settingsdialog.cpp:24`
+
+### Font Families
+
+Configurable font families:
+- **Serif Font:** For serif text (e.g., body content)
+- **Sans-serif Font:** For sans-serif text (e.g., headings)
+- **Fixed Font:** For monospace text (e.g., code blocks)
+- **Standard Font:** Selected based on default family choice
+
+### Live Preview
+
+Font changes are applied immediately to the web view settings, providing live preview without requiring dialog confirmation.
+
+**Reference:** `src/libs/ui/settingsdialog.cpp:75`
+
+## Integration with Core::Settings
+
+The dialog reads from and writes to `Core::Settings` instance:
+
+```cpp
+Core::Settings *settings = Core::Application::instance()->settings();
+```
+
+Settings are accessed via the singleton `Core::Application` instance, ensuring consistent state across the application.
+
+### Settings Persistence
+
+Changes are saved when:
+- **OK button** is clicked (saves and closes)
+- **Apply button** is clicked (saves without closing)
+- **Cancel button** is clicked (reloads settings without saving, then closes)
+
+## Platform-Specific Behavior
+
+### Global Shortcuts
+
+Global keyboard shortcuts are only available on supported platforms. The dialog automatically disables the global hotkey section and displays a tooltip when not supported:
+
+```cpp
+if (!QxtGlobalShortcut::isSupported()) {
+    ui->globalHotKeyGroupBox->setEnabled(false);
+    ui->globalHotKeyGroupBox->setToolTip(
+        tr("Global shortcuts are not supported on the current platform."));
+}
+```
+
+**Reference:** `src/libs/ui/settingsdialog.cpp:64`
+
+### Portable Builds
+
+For portable builds, docset storage paths are converted to relative paths when possible:
+
+```cpp
+#ifdef PORTABLE_BUILD
+if (path.startsWith(QCoreApplication::applicationDirPath() + QLatin1String("/"))) {
+    const QDir appDirPath(QCoreApplication::applicationDirPath());
+    path = appDirPath.relativeFilePath(path);
+}
+#endif
+```
+
+**Reference:** `src/libs/ui/settingsdialog.cpp:143`
+
+## Example Usage
+
+```cpp
+// Open settings dialog from main window
+void MainWindow::showSettingsDialog()
+{
+    // Disable global shortcut while dialog is open
+    if (m_globalShortcut) {
+        m_globalShortcut->setEnabled(false);
+    }
+
+    QScopedPointer<SettingsDialog> dialog(new SettingsDialog(this));
+    dialog->exec();
+
+    // Re-enable global shortcut
+    if (m_globalShortcut) {
+        m_globalShortcut->setEnabled(true);
+    }
+}
+```
+
+**Reference:** `src/libs/ui/mainwindow.cpp:329`
+
+## UI File
+
+The dialog layout is defined in `settingsdialog.ui` (Qt Designer UI file), which provides:
+- Tab widget structure
+- Form layouts for settings groups
+- Input controls (checkboxes, combo boxes, line edits, etc.)
+- Button box with OK, Cancel, and Apply buttons
+
+**File:** `src/libs/ui/settingsdialog.ui`

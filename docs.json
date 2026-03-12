@@ -1,122 +1,125 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
-  "name": "Mint Starter Kit",
+  "name": "Zeal",
+  "theme": "palm",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#c54c2b",
+    "light": "#2c2825",
+    "dark": "#d7d6d5"
   },
-  "favicon": "/favicon.svg",
+  "navbar": {
+    "primary": {
+      "type": "github",
+      "href": "https://github.com/zealdocs/zeal"
+    }
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/zealdocs/zeal",
+      "twitter": "https://twitter.com/zealdocs"
+    }
+  },
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "Documentation",
         "groups": [
           {
-            "group": "Getting started",
+            "group": "Get Started",
             "pages": [
-              "index",
-              "quickstart",
-              "development"
+              "introduction",
+              "installation",
+              "quickstart"
             ]
           },
           {
-            "group": "Customization",
+            "group": "User Guide",
             "pages": [
-              "essentials/settings",
-              "essentials/navigation"
+              "guides/downloading-docsets",
+              "guides/searching",
+              "guides/keyboard-shortcuts",
+              "guides/customization"
             ]
           },
           {
-            "group": "Writing content",
+            "group": "Advanced",
             "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/reusable-snippets"
-            ]
-          },
-          {
-            "group": "AI tools",
-            "pages": [
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
+              "advanced/settings",
+              "advanced/command-line",
+              "advanced/creating-docsets",
+              "advanced/protocol-handlers"
             ]
           }
         ]
       },
       {
-        "tab": "API reference",
+        "tab": "Development",
         "groups": [
           {
-            "group": "API documentation",
+            "group": "Building",
             "pages": [
-              "api-reference/introduction"
+              "development/building",
+              "development/dependencies",
+              "development/platforms"
             ]
           },
           {
-            "group": "Endpoint examples",
+            "group": "Architecture",
             "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
+              "development/architecture/overview",
+              "development/architecture/core",
+              "development/architecture/registry",
+              "development/architecture/browser",
+              "development/architecture/ui"
+            ]
+          },
+          {
+            "group": "Contributing",
+            "pages": [
+              "development/contributing",
+              "development/code-style",
+              "development/testing"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Core",
+            "pages": [
+              "api/core/application",
+              "api/core/settings",
+              "api/core/http-server"
+            ]
+          },
+          {
+            "group": "Registry",
+            "pages": [
+              "api/registry/docset",
+              "api/registry/docset-registry",
+              "api/registry/search"
+            ]
+          },
+          {
+            "group": "Browser",
+            "pages": [
+              "api/browser/webview",
+              "api/browser/webpage",
+              "api/browser/webbridge"
+            ]
+          },
+          {
+            "group": "UI",
+            "pages": [
+              "api/ui/main-window",
+              "api/ui/settings-dialog",
+              "api/ui/search-sidebar"
             ]
           }
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
-  },
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
-  },
-  "navbar": {
-    "links": [
-      {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
-      }
-    ],
-    "primary": {
-      "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
-    }
-  },
-  "contextual": {
-    "options": [
-     "copy",
-     "view",
-     "chatgpt",
-     "claude",
-     "perplexity",
-     "mcp",
-     "cursor",
-     "vscode"
-   ]
-  },
-  "footer": {
-    "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
-    }
+    ]
   }
 }

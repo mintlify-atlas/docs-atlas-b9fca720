@@ -1,0 +1,288 @@
+---
+title: Core Component
+description: Deep dive into Zeal's Core library and application foundation
+---
+
+The Core library provides the foundation for Zeal's operation, managing the application lifecycle, configuration, file operations, and local HTTP serving.
+
+## Core::Application
+
+The `Application` class is the central hub of Zeal, implemented as a singleton that coordinates all major components.
+
+**Location**: `src/libs/core/application.h`
+
+### Key Responsibilities
+
+- Application lifecycle management
+- Component initialization and coordination
+- Network request handling
+- Update checking
+- Docset extraction orchestration
+
+### Public Interface
+
+```cpp
+class Application final : public QObject
+{
+public:
+    static Application *instance();
+    
+    WidgetUi::MainWindow *mainWindow() const;
+    QNetworkAccessManager *networkManager() const;
+    Settings *settings() const;
+    Registry::DocsetRegistry *docsetRegistry();
+    FileManager *fileManager() const;
+    HttpServer *httpServer() const;
+    
+    static QString cacheLocation();
+    static QString configLocation();
+    static QVersionNumber version();
+    
+public slots:
+    void executeQuery(const Registry::SearchQuery &query, bool preventActivation);
+    void extract(const QString &filePath, const QString &destination, const QString &root);
+    QNetworkReply *download(const QUrl &url);
+    void checkForUpdates(bool quiet = false);
+    
+signals:
+    void extractionCompleted(const QString &filePath);
+    void extractionError(const QString &filePath, const QString &errorString);
+    void extractionProgress(const QString &filePath, qint64 extracted, qint64 total);
+    void updateCheckDone(const QString &version);
+    void updateCheckError(const QString &message);
+};
+```
+
+### Member Components
+
+From `src/libs/core/application.h:79-91`:
+
+```cpp
+Settings *m_settings = nullptr;
+QNetworkAccessManager *m_networkManager = nullptr;
+FileManager *m_fileManager = nullptr;
+HttpServer *m_httpServer = nullptr;
+QThread *m_extractorThread = nullptr;
+Extractor *m_extractor = nullptr;
+Registry::DocsetRegistry *m_docsetRegistry = nullptr;
+WidgetUi::MainWindow *m_mainWindow = nullptr;
+```
+
+## Core::Settings
+
+Manages all application configuration with automatic persistence.
+
+**Location**: `src/libs/core/settings.h`
+
+### Configuration Categories
+
+#### Startup Settings
+
+```cpp
+bool startMinimized;
+bool checkForUpdate;
+bool hideMenuBar;
+```
+
+#### System Tray
+
+```cpp
+bool showSystrayIcon;
+bool minimizeToSystray;
+bool hideOnClose;
+```
+
+#### Search
+
+```cpp
+bool isFuzzySearchEnabled;
+```
+
+#### Content Appearance
+
+```cpp
+enum class ContentAppearance {
+    Automatic = 0,
+    Light,
+    Dark
+};
+
+ContentAppearance contentAppearance;
+QString customCssFile;
+bool isSmoothScrollingEnabled;
+bool isHighlightOnNavigateEnabled;
+```
+
+#### Font Configuration
+
+```cpp
+QString defaultFontFamily;
+QString serifFontFamily;
+QString sansSerifFontFamily;
+QString fixedFontFamily;
+int defaultFontSize;
+int defaultFixedFontSize;
+int minimumFontSize;
+```
+
+#### Network Proxy
+
+```cpp
+enum ProxyType {
+    None = 0,
+    System = 1,
+    Http = 3,
+    Socks5 = 4
+};
+
+ProxyType proxyType;
+QString proxyHost;
+quint16 proxyPort;
+bool proxyAuthenticate;
+QString proxyUserName;
+QString proxyPassword;
+```
+
+#### External Link Policy
+
+```cpp
+enum class ExternalLinkPolicy {
+    Ask = 0,
+    Open,
+    OpenInSystemBrowser
+};
+
+ExternalLinkPolicy externalLinkPolicy;
+```
+
+### Methods
+
+```cpp
+void load();  // Load settings from persistent storage
+void save();  // Save settings to persistent storage
+bool isDarkModeEnabled() const;
+static ColorScheme colorScheme();
+```
+
+### Signals
+
+```cpp
+signals:
+    void updated();  // Emitted when settings are modified
+```
+
+Settings are persisted using Qt's `QSettings` mechanism and stored in platform-specific locations.
+
+## Core::HttpServer
+
+Provides a local HTTP server for serving documentation files efficiently.
+
+**Location**: `src/libs/core/httpserver.h`
+
+### Purpose
+
+The HTTP server enables:
+
+- Local serving of documentation files without file:// protocol limitations
+- Proper handling of web resources and AJAX requests
+- Support for JavaScript-heavy documentation
+
+### Interface
+
+```cpp
+class HttpServer : public QObject
+{
+public:
+    explicit HttpServer(QObject *parent = nullptr);
+    
+    QUrl baseUrl() const;
+    QUrl mount(const QString &prefix, const QString &path);
+    bool unmount(const QString &prefix);
+};
+```
+
+### Implementation Details
+
+From `src/libs/core/httpserver.h:36-39`:
+
+```cpp
+std::unique_ptr<httplib::Server> m_server;
+std::future<bool> m_future;
+QUrl m_baseUrl;
+```
+
+The server uses the `httplib` library and runs asynchronously using `std::future` to avoid blocking the main thread.
+
+## Core::FileManager
+
+Simple utility for file system operations.
+
+**Location**: `src/libs/core/filemanager.h`
+
+```cpp
+class FileManager final : public QObject
+{
+public:
+    explicit FileManager(QObject *parent = nullptr);
+    bool removeRecursively(const QString &path);
+};
+```
+
+Provides safe recursive directory removal for docset uninstallation.
+
+## Core::Extractor
+
+Handles archive extraction for docset installation.
+
+**Location**: `src/libs/core/extractor.h`
+
+### Interface
+
+```cpp
+class Extractor final : public QObject
+{
+public slots:
+    void extract(const QString &sourceFile,
+                 const QString &destination,
+                 const QString &root = QString());
+
+signals:
+    void error(const QString &filePath, const QString &message);
+    void completed(const QString &filePath);
+    void progress(const QString &filePath, qint64 extracted, qint64 total);
+};
+```
+
+### Threading
+
+The extractor runs in a dedicated thread (see `Application::m_extractorThread`) to prevent UI blocking during large archive extraction. Progress is reported through Qt signals.
+
+### Archive Support
+
+Uses `libarchive` (see `struct archive` at line 9) to support multiple archive formats including:
+
+- tar.gz
+- tar.bz2
+- zip
+- And other formats supported by libarchive
+
+## Component Initialization Flow
+
+1. `Application` constructor creates core services:
+   - `Settings` - loads configuration
+   - `NetworkManager` - sets up HTTP client
+   - `FileManager` - prepares file operations
+   - `HttpServer` - starts local server
+   - `Extractor` - creates extraction thread
+
+2. `DocsetRegistry` is initialized with storage path from settings
+
+3. `MainWindow` is created and connected to application signals
+
+4. Settings are applied through `applySettings()` slot
+
+## See Also
+
+- [Registry Component](./registry.mdx) - Docset management
+- [Browser Component](./browser.mdx) - Documentation rendering
+- [Architecture Overview](./overview.mdx) - Component interaction

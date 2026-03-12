@@ -1,0 +1,223 @@
+---
+title: Building Zeal
+description: Learn how to build Zeal from source using CMake
+---
+
+This guide will walk you through building Zeal from source code using CMake.
+
+## Prerequisites
+
+Before building Zeal, make sure you have all the required [dependencies](/development/dependencies) installed for your platform.
+
+## Basic Build
+
+Zeal uses CMake as its build system. The simplest way to build Zeal is:
+
+<Steps>
+  <Step title="Configure the build">
+    Run CMake to configure the build system:
+    
+    ```bash
+    cmake -B build
+    ```
+    
+    This creates a `build` directory with the generated build files.
+  </Step>
+  
+  <Step title="Build the project">
+    Compile Zeal using:
+    
+    ```bash
+    cmake --build build
+    ```
+    
+    The compiled binary will be available in the `build` directory.
+  </Step>
+</Steps>
+
+## Using CMake Presets
+
+Zeal provides CMake presets for common build configurations. Presets simplify the build process by providing pre-configured settings.
+
+### Available Presets
+
+<CodeGroup>
+```bash Debug Build
+cmake --preset ninja-multi
+cmake --build build/ninja-multi --config Debug
+```
+
+```bash Release Build
+cmake --preset ninja-multi
+cmake --build build/ninja-multi --config RelWithDebInfo
+```
+
+```bash Portable Build
+cmake --preset ninja-multi-portable
+cmake --build build/ninja-multi-portable --config RelWithDebInfo
+```
+
+```bash Windows with vcpkg
+cmake --preset ninja-multi-vcpkg
+cmake --build build/ninja-multi-vcpkg --config RelWithDebInfo
+```
+</CodeGroup>
+
+<Note>
+  The presets use the Ninja Multi-Config generator for faster builds. Make sure you have Ninja installed.
+</Note>
+
+### Preset Configurations
+
+- **ninja-multi**: Basic multi-configuration build
+- **ninja-multi-portable**: Portable build with `ZEAL_PORTABLE_BUILD=ON`
+- **ninja-multi-vcpkg**: Windows build using vcpkg for dependencies
+- **ninja-multi-vcpkg-test**: Build with testing enabled
+
+## Build Options
+
+Zeal supports several CMake options to customize the build:
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `BUILD_TESTING` | `ON` | Build the testing suite |
+| `ZEAL_PORTABLE_BUILD` | `OFF` | Build portable version |
+| `ZEAL_RELEASE_BUILD` | `OFF` | Mark as a tagged release build |
+| `ZEAL_USE_QT5` | `OFF` | Force use of Qt 5 (auto-detected by default) |
+
+### Examples
+
+<CodeGroup>
+```bash Disable Testing
+cmake -B build -DBUILD_TESTING=OFF
+cmake --build build
+```
+
+```bash Portable Build
+cmake -B build -DZEAL_PORTABLE_BUILD=ON
+cmake --build build
+```
+
+```bash Force Qt 5
+cmake -B build -DZEAL_USE_QT5=ON
+cmake --build build
+```
+</CodeGroup>
+
+## Build Types
+
+CMake supports multiple build types:
+
+- **Debug**: No optimization, includes debug symbols
+- **Release**: Full optimization, no debug symbols
+- **RelWithDebInfo**: Optimized with debug symbols (recommended)
+- **MinSizeRel**: Optimized for size
+
+```bash
+cmake -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo
+cmake --build build
+```
+
+<Note>
+  When using multi-config generators like Ninja Multi-Config, specify the configuration during build:
+  
+  ```bash
+  cmake --build build --config RelWithDebInfo
+  ```
+</Note>
+
+## Running Tests
+
+If `BUILD_TESTING` is enabled, you can run the test suite:
+
+```bash
+cmake --preset ninja-multi-vcpkg-test
+cmake --build build/ninja-multi-vcpkg-test --config Debug
+ctest --test-dir build/ninja-multi-vcpkg-test -C Debug
+```
+
+## Building Packages
+
+Zeal uses CPack for creating distributable packages:
+
+<CodeGroup>
+```bash ZIP/7Z Archive
+cmake --build build --target package
+```
+
+```bash Windows Installer (WiX)
+cmake --preset ninja-multi-vcpkg-release
+cmake --build build/ninja-multi-vcpkg-release --config RelWithDebInfo --target package
+```
+
+```bash Source Package
+cmake --build build --target package_source
+```
+</CodeGroup>
+
+## Troubleshooting
+
+### Qt Version Issues
+
+Zeal requires Qt 5.15.2 or Qt 6.2.0+. If CMake can't find Qt:
+
+```bash
+cmake -B build -DCMAKE_PREFIX_PATH=/path/to/qt
+```
+
+<Warning>
+  Qt WebEngine Widgets is required. Make sure it's installed as part of your Qt distribution.
+</Warning>
+
+### vcpkg Dependencies
+
+On Windows, using vcpkg is recommended for managing dependencies:
+
+```bash
+set VCPKG_ROOT=C:\path\to\vcpkg
+cmake --preset ninja-multi-vcpkg
+```
+
+### libarchive Not Found
+
+If libarchive isn't found (common on macOS with Homebrew):
+
+```bash
+cmake -B build -DLibArchive_INCLUDE_DIRS=/opt/homebrew/opt/libarchive/include \
+               -DLibArchive_LIBRARIES=/opt/homebrew/opt/libarchive/lib/libarchive.dylib
+```
+
+### Missing X11 Dependencies (Linux)
+
+On Linux, you may need X11 development packages:
+
+```bash
+# Debian/Ubuntu
+sudo apt install libx11-dev libxcb-keysyms1-dev
+
+# Fedora
+sudo dnf install libX11-devel xcb-util-keysyms-devel
+```
+
+### Compiler Warnings as Errors
+
+<Note>
+  CMake 3.24+ enables `CMAKE_COMPILE_WARNING_AS_ERROR` by default. This helps catch potential issues early.
+</Note>
+
+If you encounter warnings that block the build, fix them or temporarily disable this for testing:
+
+```bash
+cmake -B build -DCMAKE_COMPILE_WARNING_AS_ERROR=OFF
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Dependencies" icon="puzzle-piece" href="/development/dependencies">
+    Learn about all required and optional dependencies
+  </Card>
+  <Card title="Platform Notes" icon="computer" href="/development/platforms">
+    Platform-specific build instructions and requirements
+  </Card>
+</CardGroup>

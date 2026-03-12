@@ -1,0 +1,470 @@
+---
+title: Platform-Specific Notes
+description: Platform-specific build requirements and instructions for Windows, Linux, and macOS
+---
+
+This page covers platform-specific considerations when building Zeal on different operating systems.
+
+## Windows
+
+Building Zeal on Windows requires careful dependency management. Using vcpkg is the recommended approach.
+
+### Prerequisites
+
+<Steps>
+  <Step title="Install Visual Studio">
+    Install Visual Studio 2017 or newer with C++ development tools:
+    
+    - Desktop development with C++
+    - Windows 10 SDK
+  </Step>
+  
+  <Step title="Install Qt">
+    Download and install Qt from [qt.io](https://www.qt.io/download):
+    
+    - Qt 5.15.2+ or Qt 6.2.0+
+    - Include Qt WebEngine component
+    - Add Qt's bin directory to PATH
+  </Step>
+  
+  <Step title="Install vcpkg">
+    ```powershell
+    git clone https://github.com/microsoft/vcpkg.git C:\vcpkg
+    cd C:\vcpkg
+    .\bootstrap-vcpkg.bat
+    ```
+    
+    Set the environment variable:
+    ```powershell
+    $env:VCPKG_ROOT="C:\vcpkg"
+    ```
+  </Step>
+  
+  <Step title="Install Ninja (Optional)">
+    ```powershell
+    winget install Ninja-build.Ninja
+    ```
+    
+    Or use Visual Studio's bundled Ninja from Developer Command Prompt.
+  </Step>
+</Steps>
+
+### Building with vcpkg
+
+The recommended build method on Windows uses the vcpkg preset:
+
+<CodeGroup>
+```powershell Debug Build
+cmake --preset ninja-multi-vcpkg
+cmake --build build/ninja-multi-vcpkg --config Debug
+```
+
+```powershell Release Build
+cmake --preset ninja-multi-vcpkg
+cmake --build build/ninja-multi-vcpkg --config RelWithDebInfo
+```
+
+```powershell Portable Release
+cmake --preset ninja-multi-vcpkg-portable
+cmake --build build/ninja-multi-vcpkg-portable --config RelWithDebInfo
+```
+</CodeGroup>
+
+<Note>
+  The vcpkg preset automatically installs dependencies listed in `vcpkg.json` during the configure step.
+</Note>
+
+### Windows-Specific Options
+
+When building on Windows, several platform-specific features are enabled:
+
+- **Automatic dependency deployment**: `X_VCPKG_APPLOCAL_DEPS_INSTALL=ON` copies DLLs to the build directory
+- **Version information**: Embedded in the executable via `versioninfo.rc`
+- **WiX installer**: Available for non-portable builds
+
+### Creating Windows Packages
+
+<CodeGroup>
+```powershell ZIP Package
+cmake --build build/ninja-multi-vcpkg-release --config RelWithDebInfo --target package
+```
+
+```powershell Windows Installer (WiX)
+# Requires WiX Toolset: https://wixtoolset.org/
+cmake --preset ninja-multi-vcpkg
+cmake --build build/ninja-multi-vcpkg --config RelWithDebInfo --target package
+```
+</CodeGroup>
+
+<Warning>
+  WiX installer generation is only available for non-portable builds. Portable builds generate ZIP archives only.
+</Warning>
+
+### Troubleshooting Windows
+
+#### Qt Not Found
+
+```powershell
+cmake --preset ninja-multi-vcpkg -DCMAKE_PREFIX_PATH="C:\Qt\6.5.0\msvc2019_64"
+```
+
+#### vcpkg Errors
+
+If vcpkg integration fails:
+
+```powershell
+# Manually specify toolchain file
+cmake -B build -DCMAKE_TOOLCHAIN_FILE="C:\vcpkg\scripts\buildsystems\vcpkg.cmake"
+```
+
+#### OpenSSL DLLs Missing
+
+Qt WebEngine requires OpenSSL DLLs at runtime:
+
+```powershell
+vcpkg install openssl
+# DLLs are automatically copied with X_VCPKG_APPLOCAL_DEPS_INSTALL
+```
+
+## Linux
+
+Linux builds vary by distribution but generally follow a similar pattern. X11 support is required for global shortcuts.
+
+### Ubuntu/Debian
+
+<Steps>
+  <Step title="Install build dependencies">
+    ```bash
+    sudo apt update
+    sudo apt install build-essential cmake ninja-build extra-cmake-modules
+    ```
+  </Step>
+  
+  <Step title="Install Qt">
+    ```bash Qt 6 (recommended)
+    sudo apt install qt6-base-dev qt6-webengine-dev
+    ```
+    
+    ```bash Qt 5
+    sudo apt install qtbase5-dev qtwebengine5-dev libqt5x11extras5-dev
+    ```
+  </Step>
+  
+  <Step title="Install libraries">
+    ```bash
+    sudo apt install libarchive-dev libsqlite3-dev libssl-dev
+    ```
+  </Step>
+  
+  <Step title="Install X11 dependencies">
+    ```bash
+    sudo apt install libx11-dev libxcb-keysyms1-dev
+    ```
+  </Step>
+</Steps>
+
+### Fedora/RHEL
+
+<Steps>
+  <Step title="Install development tools">
+    ```bash
+    sudo dnf groupinstall "Development Tools"
+    sudo dnf install cmake ninja-build extra-cmake-modules
+    ```
+  </Step>
+  
+  <Step title="Install Qt">
+    ```bash Qt 6
+    sudo dnf install qt6-qtbase-devel qt6-qtwebengine-devel
+    ```
+    
+    ```bash Qt 5
+    sudo dnf install qt5-qtbase-devel qt5-qtwebengine-devel qt5-qtx11extras-devel
+    ```
+  </Step>
+  
+  <Step title="Install libraries">
+    ```bash
+    sudo dnf install libarchive-devel sqlite-devel openssl-devel
+    ```
+  </Step>
+  
+  <Step title="Install X11 dependencies">
+    ```bash
+    sudo dnf install libX11-devel xcb-util-keysyms-devel
+    ```
+  </Step>
+</Steps>
+
+### Arch Linux
+
+```bash
+sudo pacman -S base-devel cmake ninja extra-cmake-modules \
+               qt6-base qt6-webengine \
+               libarchive sqlite openssl \
+               libx11 xcb-util-keysyms
+```
+
+### Building on Linux
+
+Standard CMake workflow:
+
+<CodeGroup>
+```bash Basic Build
+cmake -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo
+cmake --build build
+```
+
+```bash Using Preset
+cmake --preset ninja-multi
+cmake --build build/ninja-multi --config RelWithDebInfo
+```
+
+```bash With Ninja
+cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo
+ninja -C build
+```
+</CodeGroup>
+
+### Installing on Linux
+
+```bash
+cmake --build build --target install
+
+# Or with DESTDIR for packaging
+DESTDIR=/tmp/zeal-install cmake --build build --target install
+```
+
+Default installation paths (GNUInstallDirs):
+
+- Binary: `/usr/local/bin/zeal`
+- Icons: `/usr/local/share/icons/`
+- Desktop file: `/usr/local/share/applications/`
+
+### Wayland Support
+
+<Note>
+  Global keyboard shortcuts require X11. On Wayland, shortcuts will not work unless XWayland is used with X11 libraries available.
+</Note>
+
+If X11 libraries are not found during configuration, Zeal builds with a no-op implementation:
+
+```
+-- X11 not found, global shortcuts will be disabled
+```
+
+### Troubleshooting Linux
+
+#### Qt WebEngine Missing
+
+Qt WebEngine is a separate package on many distributions:
+
+```bash
+# Debian/Ubuntu
+sudo apt install qtwebengine5-dev  # Qt 5
+sudo apt install qt6-webengine-dev # Qt 6
+
+# Fedora
+sudo dnf install qt5-qtwebengine-devel  # Qt 5
+sudo dnf install qt6-qtwebengine-devel  # Qt 6
+```
+
+#### X11 Headers Not Found
+
+```bash
+# Debian/Ubuntu
+sudo apt install libx11-dev
+
+# Fedora
+sudo dnf install libX11-devel
+```
+
+#### xcb-util-keysyms Missing
+
+```bash
+# Debian/Ubuntu
+sudo apt install libxcb-keysyms1-dev
+
+# Fedora
+sudo dnf install xcb-util-keysyms-devel
+```
+
+## macOS
+
+Building on macOS is straightforward with Homebrew.
+
+### Prerequisites
+
+<Steps>
+  <Step title="Install Xcode Command Line Tools">
+    ```bash
+    xcode-select --install
+    ```
+  </Step>
+  
+  <Step title="Install Homebrew">
+    If not already installed:
+    
+    ```bash
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    ```
+  </Step>
+  
+  <Step title="Install dependencies">
+    ```bash
+    brew install cmake ninja qt@6 libarchive sqlite
+    ```
+    
+    Or for Qt 5:
+    ```bash
+    brew install cmake ninja qt@5 libarchive sqlite
+    ```
+  </Step>
+</Steps>
+
+### Building on macOS
+
+Zeal automatically searches Homebrew paths for libarchive.
+
+<CodeGroup>
+```bash Qt 6 (Homebrew)
+export CMAKE_PREFIX_PATH="$(brew --prefix qt@6)"
+cmake -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo
+cmake --build build
+```
+
+```bash Qt 5 (Homebrew)
+export CMAKE_PREFIX_PATH="$(brew --prefix qt@5)"
+cmake -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo
+cmake --build build
+```
+
+```bash Using Preset
+export CMAKE_PREFIX_PATH="$(brew --prefix qt@6)"
+cmake --preset ninja-multi
+cmake --build build/ninja-multi --config RelWithDebInfo
+```
+</CodeGroup>
+
+### macOS App Bundle
+
+The build produces a macOS application bundle:
+
+- **Bundle location**: `build/Zeal.app`
+- **Binary**: `build/Zeal.app/Contents/MacOS/Zeal`
+- **Icon**: Embedded in `Zeal.app/Contents/Resources/zeal.icns`
+
+### Running on macOS
+
+```bash
+# From terminal
+open build/Zeal.app
+
+# Or directly
+./build/Zeal.app/Contents/MacOS/Zeal
+```
+
+### macOS-Specific Features
+
+- **Carbon framework**: Used for global keyboard shortcuts
+- **Retina support**: Automatic high-DPI rendering
+- **macOS bundle properties**: Set in CMakeLists.txt
+
+### Troubleshooting macOS
+
+#### Qt Not Found
+
+Ensure CMAKE_PREFIX_PATH points to Qt:
+
+```bash
+export CMAKE_PREFIX_PATH="$(brew --prefix qt@6)"
+
+# Or specify directly
+cmake -B build -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6)"
+```
+
+#### libarchive Issues
+
+CMake checks these paths automatically:
+
+- `/opt/homebrew/opt/libarchive` (Apple Silicon)
+- `/usr/local/opt/libarchive` (Intel)
+
+If not found, specify manually:
+
+```bash
+cmake -B build \
+  -DLibArchive_INCLUDE_DIRS="$(brew --prefix libarchive)/include" \
+  -DLibArchive_LIBRARIES="$(brew --prefix libarchive)/lib/libarchive.dylib"
+```
+
+#### Code Signing
+
+<Note>
+  For distribution, the app bundle needs to be signed:
+  
+  ```bash
+  codesign --deep --force --verify --verbose --sign "-" build/Zeal.app
+  ```
+</Note>
+
+## Cross-Platform Considerations
+
+### C++ Standard
+
+Zeal requires C++17:
+
+```cmake
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+```
+
+This is configured automatically by CMake.
+
+### Qt Version Detection
+
+Zeal automatically detects and prefers Qt 6, but falls back to Qt 5:
+
+```cmake
+find_package(QT NAMES Qt6 COMPONENTS Core)
+if(NOT QT_FOUND)
+    find_package(QT NAMES Qt5 REQUIRED COMPONENTS Core)
+endif()
+```
+
+To force Qt 5:
+
+```bash
+cmake -B build -DZEAL_USE_QT5=ON
+```
+
+### Platform Detection in CMake
+
+Zeal uses standard CMake variables:
+
+- `WIN32`: Windows builds
+- `APPLE`: macOS builds  
+- `UNIX`: Linux and macOS builds
+- `CMAKE_SYSTEM_PROCESSOR`: Architecture detection
+
+### Global Shortcuts Implementation
+
+Zeal uses different implementations per platform:
+
+| Platform | Implementation | Dependencies |
+|----------|---------------|-------------|
+| Windows | Win32 API | `RegisterHotKey` |
+| macOS | Carbon framework | Carbon.framework |
+| Linux X11 | XCB | libX11, xcb-util-keysyms |
+| Linux Wayland | Not supported | Falls back to no-op |
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Building Zeal" icon="hammer" href="/development/building">
+    General build instructions and options
+  </Card>
+  <Card title="Dependencies" icon="puzzle-piece" href="/development/dependencies">
+    Complete list of required dependencies
+  </Card>
+</CardGroup>

@@ -1,0 +1,246 @@
+---
+title: 'WebView'
+description: 'Custom Qt WebEngineView for rendering documentation with zoom and navigation support'
+---
+
+## Overview
+
+The `Zeal::Browser::WebView` class is a customized Qt WebEngineView widget that provides enhanced functionality for displaying documentation content. It extends the standard QWebEngineView with zoom controls, custom context menus, and special handling for mouse and wheel events.
+
+**Header:** `src/libs/browser/webview.h`
+
+**Inherits:** `QWebEngineView`
+
+## Class Definition
+
+```cpp
+namespace Zeal {
+namespace Browser {
+
+class WebView final : public QWebEngineView
+{
+    Q_OBJECT
+    Q_DISABLE_COPY_MOVE(WebView)
+public:
+    explicit WebView(QWidget *parent = nullptr);
+
+    int zoomLevel() const;
+    void setZoomLevel(int level);
+
+    static const QVector<int> &availableZoomLevels();
+    static int defaultZoomLevel();
+
+public slots:
+    void zoomIn();
+    void zoomOut();
+    void resetZoom();
+
+signals:
+    void zoomLevelChanged();
+
+protected:
+    QWebEngineView *createWindow(QWebEnginePage::WebWindowType type) override;
+    void contextMenuEvent(QContextMenuEvent *event) override;
+};
+
+} // namespace Browser
+} // namespace Zeal
+```
+
+## Constructor
+
+### WebView()
+
+```cpp
+explicit WebView(QWidget *parent = nullptr);
+```
+
+Creates a new WebView instance with the following configurations:
+- Initializes a custom [WebPage](/api/browser/webpage) instance
+- Sets zoom level to default (100%)
+- Enables PDF plugin support via `QWebEngineSettings::PluginsEnabled`
+- Disables focus on navigation via `QWebEngineSettings::FocusOnNavigationEnabled`
+- Installs a global event filter for handling mouse and wheel events
+
+**Parameters:**
+- `parent` - Parent QWidget (optional)
+
+## Zoom Management
+
+### zoomLevel()
+
+```cpp
+int zoomLevel() const;
+```
+
+Returns the current zoom level index (0-based index into the available zoom levels).
+
+**Returns:** Current zoom level index
+
+### setZoomLevel()
+
+```cpp
+void setZoomLevel(int level);
+```
+
+Sets the zoom level for the web view. The zoom factor is automatically adjusted for HiDPI displays by scaling relative to the logical DPI.
+
+**Parameters:**
+- `level` - Zoom level index (clamped to valid range)
+
+**Behavior:**
+- Clamps the level to valid range: `[0, availableZoomLevels().size() - 1]`
+- Scales zoom factor for HiDPI displays (>96 DPI)
+- Emits `zoomLevelChanged()` signal when changed
+
+**Example:**
+```cpp
+webView->setZoomLevel(6); // Sets to 100% zoom (default)
+```
+
+### availableZoomLevels()
+
+```cpp
+static const QVector<int> &availableZoomLevels();
+```
+
+Returns the list of available zoom percentages.
+
+**Returns:** Vector containing: `{30, 40, 50, 67, 80, 90, 100, 110, 120, 133, 150, 170, 200, 220, 233, 250, 270, 285, 300}`
+
+### defaultZoomLevel()
+
+```cpp
+static int defaultZoomLevel();
+```
+
+Returns the default zoom level index (100% zoom).
+
+**Returns:** Index of 100% in the available zoom levels (typically 6)
+
+## Zoom Slots
+
+### zoomIn()
+
+```cpp
+void zoomIn();
+```
+
+Increases the zoom level by one step.
+
+### zoomOut()
+
+```cpp
+void zoomOut();
+```
+
+Decreases the zoom level by one step.
+
+### resetZoom()
+
+```cpp
+void resetZoom();
+```
+
+Resets the zoom level to default (100%).
+
+## Signals
+
+### zoomLevelChanged()
+
+```cpp
+void zoomLevelChanged();
+```
+
+Emitted when the zoom level changes.
+
+## Event Handling
+
+The WebView provides custom handling for several events:
+
+### Mouse Button Events
+
+- **Back Button**: Navigates to the previous page in history
+- **Forward Button**: Navigates to the next page in history
+
+### Wheel Events
+
+- **Ctrl + Mouse Wheel**: Adjusts zoom level (every 120 units of wheel delta changes zoom by one level)
+
+### Context Menu
+
+Provides a custom context menu with options:
+- **On Links**: Open in new tab, open in desktop browser, copy link
+- **On Selection**: Copy selected text
+- **On Page**: Back, forward, open in desktop browser
+
+The context menu intelligently filters options based on the URL scheme (e.g., `qrc://` for local resources, `javascript:` for scripts).
+
+## Qt WebEngine Integration
+
+The WebView class leverages Qt WebEngine for modern web rendering:
+
+### Enabled Features
+
+- **PDF Support**: Plugins are enabled to support embedded PDF viewing
+- **Custom Navigation**: Uses custom [WebPage](/api/browser/webpage) for navigation control
+- **HiDPI Scaling**: Automatic zoom adjustment for high-DPI displays
+
+### Window Creation
+
+```cpp
+QWebEngineView *createWindow(QWebEnginePage::WebWindowType type) override;
+```
+
+When JavaScript or user action requests a new window, this method creates a new browser tab in the main window.
+
+**Returns:** WebView instance from the newly created tab
+
+## Usage Example
+
+```cpp
+#include <browser/webview.h>
+
+// Create a web view
+auto *webView = new Zeal::Browser::WebView(parentWidget);
+
+// Load documentation
+webView->load(QUrl("qrc:///browser/zealdocs.html"));
+
+// Set up zoom controls
+connect(zoomInButton, &QPushButton::clicked, webView, &Zeal::Browser::WebView::zoomIn);
+connect(zoomOutButton, &QPushButton::clicked, webView, &Zeal::Browser::WebView::zoomOut);
+connect(resetZoomButton, &QPushButton::clicked, webView, &Zeal::Browser::WebView::resetZoom);
+
+// Track zoom changes
+connect(webView, &Zeal::Browser::WebView::zoomLevelChanged, [webView]() {
+    const int level = webView->zoomLevel();
+    const int percent = Zeal::Browser::WebView::availableZoomLevels().at(level);
+    qDebug() << "Zoom level:" << percent << "%";
+});
+```
+
+## Implementation Details
+
+### Source Files
+
+- **Header**: [src/libs/browser/webview.h](https://github.com/zealdocs/zeal/blob/main/src/libs/browser/webview.h)
+- **Implementation**: [src/libs/browser/webview.cpp](https://github.com/zealdocs/zeal/blob/main/src/libs/browser/webview.cpp)
+
+### Key Implementation Notes
+
+1. **DPI Scaling** (webview.cpp:68): Zoom factor calculation includes DPI compensation:
+   ```cpp
+   const double dpiZoomFactor = std::max(1.0, logicalDpiY() / 96.0);
+   setZoomFactor(availableZoomLevels().at(level) / 100.0 * dpiZoomFactor);
+   ```
+
+2. **Event Filtering** (webview.cpp:244): Uses event filter on application instance to intercept mouse and wheel events on child widgets
+
+3. **Context Menu** (webview.cpp:109): Dynamically builds context menu based on the clicked element type and URL scheme
+
+## See Also
+
+- [WebPage](/api/browser/webpage) - Custom page class used by WebView
+- [WebBridge](/api/browser/webbridge) - JavaScript bridge for C++ communication
+- [Qt WebEngineView Documentation](https://doc.qt.io/qt-6/qwebengineview.html)

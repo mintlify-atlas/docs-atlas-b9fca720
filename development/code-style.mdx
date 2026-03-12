@@ -1,0 +1,487 @@
+---
+title: Code Style Guide
+description: Coding standards and conventions for Zeal development
+---
+
+Zeal follows consistent coding standards to maintain code quality and readability. All contributors should follow these guidelines when submitting code.
+
+## EditorConfig
+
+Zeal uses [EditorConfig](https://editorconfig.org/) to maintain consistent coding styles. The `.editorconfig` file in the repository root defines the core formatting rules.
+
+Most modern editors and IDEs support EditorConfig automatically or through plugins. Make sure your editor is configured to respect the `.editorconfig` file.
+
+## General Formatting Rules
+
+These rules apply to all files in the project:
+
+### Character Encoding and Line Endings
+
+- **Charset**: UTF-8
+- **Line endings**: LF (Unix-style, `\n`)
+- **Final newline**: Always insert a final newline at the end of files
+- **Trailing whitespace**: Remove all trailing whitespace
+
+### Indentation
+
+- **Indent style**: Spaces (never tabs)
+- **Indent size**: 4 spaces
+- **Max line length**: 100 characters
+
+```cpp
+// Good
+void someFunction()
+{
+    int value = 42;
+    if (value > 0) {
+        doSomething();
+    }
+}
+
+// Bad - uses tabs
+void someFunction()
+{
+\tint value = 42;  // Tab character
+}
+
+// Bad - inconsistent indentation
+void someFunction()
+{
+  int value = 42;  // 2 spaces instead of 4
+}
+```
+
+### Exceptions for Specific File Types
+
+#### CMake Files
+
+- **Files**: `CMakeLists.txt`, `*.cmake`
+- **Indent size**: 4 spaces (planned to be 2 in the future)
+
+```cmake
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Test)
+
+add_executable(fuzzy_test fuzzy_test.cpp)
+target_link_libraries(fuzzy_test PRIVATE Util Qt::Test)
+```
+
+#### CSS Files
+
+- **Files**: `*.css`
+- **Indent size**: 2 spaces
+
+```css
+.search-results {
+  padding: 10px;
+  margin: 0;
+}
+```
+
+#### JSON Files
+
+- **Files**: `*.json`
+- **Indent size**: 2 spaces
+
+```json
+{
+  "name": "value",
+  "nested": {
+    "key": "value"
+  }
+}
+```
+
+#### YAML Files
+
+- **Files**: `*.yaml`, `*.yml`
+- **Indent size**: 2 spaces
+
+```yaml
+name: Build Check
+on:
+  push:
+    branches:
+      - main
+```
+
+## C++ Coding Conventions
+
+### File Organization
+
+#### Header Files (`.h`)
+
+1. Copyright and license header
+2. Include guard (using `#ifndef`/`#define`)
+3. System includes (Qt, standard library)
+4. Namespace declarations
+5. Class declarations
+6. Include guard closing
+
+```cpp
+// Copyright (C) Oleg Shparber, et al. <https://zealdocs.org>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+#ifndef ZEAL_UTIL_FUZZY_H
+#define ZEAL_UTIL_FUZZY_H
+
+#include <QString>
+#include <QVector>
+
+namespace Zeal {
+namespace Util {
+namespace Fuzzy {
+
+double score(const QString &needle, const QString &haystack);
+
+} // namespace Fuzzy
+} // namespace Util
+} // namespace Zeal
+
+#endif // ZEAL_UTIL_FUZZY_H
+```
+
+#### Implementation Files (`.cpp`)
+
+1. Copyright and license header
+2. Corresponding header include
+3. System includes
+4. Local includes
+5. Anonymous namespace (for internal helpers)
+6. Implementation
+
+```cpp
+// Copyright (C) Oleg Shparber, et al. <https://zealdocs.org>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+#include "fuzzy.h"
+
+#include <algorithm>
+#include <cmath>
+#include <limits>
+
+namespace Zeal {
+namespace Util {
+namespace Fuzzy {
+
+namespace {
+constexpr double SCORE_GAP_LEADING = -0.005;
+constexpr double SCORE_GAP_TRAILING = -0.005;
+} // anonymous namespace
+
+double score(const QString &needle, const QString &haystack)
+{
+    // Implementation
+}
+
+} // namespace Fuzzy
+} // namespace Util
+} // namespace Zeal
+```
+
+### Copyright Headers
+
+All source files must include the copyright header:
+
+```cpp
+// Copyright (C) Oleg Shparber, et al. <https://zealdocs.org>
+// SPDX-License-Identifier: GPL-3.0-or-later
+```
+
+### Naming Conventions
+
+#### Namespaces
+
+- Use PascalCase for namespace names
+- Nest namespaces for logical organization
+- Always close namespaces with comments
+
+```cpp
+namespace Zeal {
+namespace Util {
+namespace Fuzzy {
+
+// Code here
+
+} // namespace Fuzzy
+} // namespace Util
+} // namespace Zeal
+```
+
+#### Classes and Structs
+
+- Use PascalCase for class names
+- Use descriptive names that indicate purpose
+
+```cpp
+class SearchModel;
+class DocsetRegistry;
+class MainWindow;
+```
+
+#### Functions and Methods
+
+- Use camelCase for function names
+- Start with a lowercase letter
+- Use descriptive verb-based names
+
+```cpp
+void computeScore();
+QString formatTitle();
+bool hasMatch();
+```
+
+#### Variables
+
+- Use camelCase for variable names
+- Start with a lowercase letter
+- Use descriptive names
+
+```cpp
+int needleLen;
+double matchBonus;
+const QString haystack;
+```
+
+#### Constants
+
+- Use UPPER_CASE with underscores for constants
+- Use `constexpr` when possible
+
+```cpp
+constexpr double SCORE_GAP_LEADING = -0.005;
+constexpr double SCORE_MATCH_CONSECUTIVE = 1.0;
+constexpr int FZY_MAX_LEN = 1024;
+```
+
+#### Private Members
+
+- No special prefix or suffix convention is enforced
+- Use clear, descriptive names
+
+### Qt Coding Style
+
+Zeal uses Qt extensively and follows Qt conventions:
+
+#### Qt Types
+
+- Prefer Qt types: `QString`, `QList`, `QVector`, etc.
+- Use Qt's foreach alternatives when appropriate
+
+```cpp
+// Good
+QString name;
+QVector<int> positions;
+
+// Acceptable but consider Qt types first
+std::string name;
+std::vector<int> positions;
+```
+
+#### Signals and Slots
+
+- Use Qt's signal/slot mechanism
+- Prefix signal names with action verbs
+
+```cpp
+signals:
+    void dataChanged();
+    void errorOccurred(const QString &error);
+
+public slots:
+    void updateData();
+    void handleError();
+```
+
+#### Qt Keywords
+
+- Use Qt parent/child memory management
+- Use `Q_OBJECT` macro for classes with signals/slots
+
+```cpp
+class MyWidget : public QWidget
+{
+    Q_OBJECT
+
+public:
+    explicit MyWidget(QWidget *parent = nullptr);
+
+signals:
+    void clicked();
+};
+```
+
+### Code Structure
+
+#### Braces
+
+- Opening brace on the same line for control statements
+- Opening brace on a new line for function definitions (varies by context)
+- Always use braces for control statements, even single-line
+
+```cpp
+// Control statements
+if (condition) {
+    doSomething();
+}
+
+// Functions (check existing code for local conventions)
+void function()
+{
+    // Implementation
+}
+
+// Always use braces
+if (condition) {
+    singleStatement();
+}
+```
+
+#### Spacing
+
+- Space after keywords: `if (`, `for (`, `while (`
+- No space between function name and opening parenthesis
+- Space around operators: `a + b`, `x = 5`
+- No space inside parentheses
+
+```cpp
+// Good
+if (condition) {
+    result = a + b;
+}
+
+// Bad
+if( condition ){
+    result=a+b;
+}
+```
+
+#### Include Order
+
+1. Corresponding header (for `.cpp` files)
+2. Blank line
+3. Qt includes
+4. Blank line  
+5. Standard library includes
+6. Blank line
+7. Local project includes
+
+```cpp
+#include "fuzzy.h"
+
+#include <QString>
+#include <QVector>
+
+#include <algorithm>
+#include <cmath>
+#include <limits>
+```
+
+### Documentation
+
+#### Doxygen Comments
+
+Use Doxygen-style comments for public APIs:
+
+```cpp
+/**
+ * @brief Computes fuzzy match score for QString inputs
+ *
+ * Convenience wrapper around computeScore() with pre-filtering.
+ * Returns raw fzy scores - caller should filter results.
+ *
+ * @param needle Search query
+ * @param haystack Text to search in
+ * @param positions Optional output list of matched haystack indices
+ * @return Match score (higher is better, -infinity for no match)
+ */
+double score(const QString &needle, const QString &haystack, 
+             QVector<int> *positions = nullptr);
+```
+
+#### Inline Comments
+
+Use `//` for inline comments:
+
+```cpp
+// Pre-filter: check if all needle characters exist in haystack
+if (!needle.isEmpty() && !haystack.isEmpty()) {
+    return computeScore(needle, haystack, positions);
+}
+```
+
+#### TODO Comments
+
+Mark future work with TODO comments:
+
+```cpp
+#include <QVector> // TODO: [Qt 6] Use QList.
+```
+
+## Static Analysis
+
+Zeal uses static analysis tools:
+
+- **Coverity Scan**: Automated static analysis
+- **Compiler warnings**: Treated as errors (when CMake >= 3.24.0)
+
+```cmake
+if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.24.0")
+    set(CMAKE_COMPILE_WARNING_AS_ERROR ON)
+endif()
+```
+
+Ensure your code compiles without warnings.
+
+## Pre-commit Checks
+
+Before committing:
+
+1. **Format check**: Ensure code follows EditorConfig rules
+2. **Build**: Code must compile without errors or warnings
+3. **Tests**: All tests must pass
+4. **Static analysis**: No new warnings
+
+## Editor Configuration
+
+### VS Code
+
+Install the EditorConfig extension:
+
+```json
+{
+  "editor.formatOnSave": true,
+  "editor.rulers": [100]
+}
+```
+
+### CLion / Qt Creator
+
+Both IDEs support EditorConfig natively. Enable EditorConfig support in settings.
+
+### Vim
+
+Install the `editorconfig-vim` plugin.
+
+### Emacs
+
+Install the `editorconfig-emacs` package.
+
+## Additional Resources
+
+- [Qt Coding Style](https://wiki.qt.io/Qt_Coding_Style)
+- [Qt Coding Conventions](https://wiki.qt.io/Coding_Conventions)
+- [EditorConfig](https://editorconfig.org/)
+- [Doxygen Documentation](https://www.doxygen.nl/manual/docblocks.html)
+
+## Summary
+
+Key points to remember:
+
+- Use EditorConfig settings (4 spaces, UTF-8, LF line endings)
+- Follow Qt naming conventions (PascalCase for classes, camelCase for functions)
+- Include copyright headers in all source files
+- Write clear, documented code with Doxygen comments for public APIs
+- Keep lines under 100 characters
+- Run tests and ensure clean builds before committing
+
+When in doubt, follow the style of existing code in the file you're editing.

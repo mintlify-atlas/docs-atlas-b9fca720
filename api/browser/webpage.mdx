@@ -1,0 +1,262 @@
+---
+title: 'WebPage'
+description: 'Custom Qt WebEnginePage with navigation control and JavaScript console logging'
+---
+
+## Overview
+
+The `Zeal::Browser::WebPage` class is a customized Qt WebEnginePage that provides security controls for navigation requests and enhanced debugging through JavaScript console message logging. It handles the distinction between local documentation resources and external URLs, implementing configurable policies for external link access.
+
+**Header:** `src/libs/browser/webpage.h`
+
+**Inherits:** `QWebEnginePage`
+
+## Class Definition
+
+```cpp
+namespace Zeal {
+namespace Browser {
+
+class WebPage final : public QWebEnginePage
+{
+    Q_OBJECT
+    Q_DISABLE_COPY_MOVE(WebPage)
+public:
+    explicit WebPage(QObject *parent = nullptr);
+
+protected:
+    bool acceptNavigationRequest(const QUrl &requestUrl, 
+                                NavigationType type, 
+                                bool isMainFrame) override;
+    void javaScriptConsoleMessage(QWebEnginePage::JavaScriptConsoleMessageLevel level,
+                                 const QString &message,
+                                 int lineNumber,
+                                 const QString &sourceId) override;
+};
+
+} // namespace Browser
+} // namespace Zeal
+```
+
+## Constructor
+
+### WebPage()
+
+```cpp
+explicit WebPage(QObject *parent = nullptr);
+```
+
+Creates a new WebPage instance using the default web profile configured in `Browser::Settings`.
+
+**Parameters:**
+- `parent` - Parent QObject (optional)
+
+**Behavior:**
+- Uses `Settings::defaultProfile()` for the QWebEngineProfile
+- Inherits profile settings like cache location, persistent storage, and HTTP user agent
+
+## Navigation Control
+
+### acceptNavigationRequest()
+
+```cpp
+bool acceptNavigationRequest(const QUrl &requestUrl, 
+                            QWebEnginePage::NavigationType type,
+                            bool isMainFrame) override;
+```
+
+Determines whether a navigation request should be allowed. This method implements Zeal's security model for handling external links.
+
+**Parameters:**
+- `requestUrl` - The URL being navigated to
+- `type` - Type of navigation (link click, form submit, etc.)
+- `isMainFrame` - Whether this is a main frame navigation
+
+**Returns:** `true` if navigation is allowed, `false` otherwise
+
+**Navigation Rules:**
+
+1. **Local URLs**: Always allowed (detected via `Core::NetworkAccessManager::isLocalUrl()`)
+   - `qrc://` resources (bundled documentation files)
+   - `file://` URLs from local docsets
+
+2. **External Resources on External Pages**: Allowed once already on an external page
+
+3. **External Resources on Local Pages**: Blocked if not in main frame
+   - Prevents external tracking scripts/images on documentation pages
+   - Logged with debug message
+
+4. **External Main Frame Navigation**: Controlled by user settings policy
+
+**External Link Policies:**
+
+```cpp
+enum class ExternalLinkPolicy {
+    Open,                    // Open directly in Zeal
+    Ask,                     // Prompt user with dialog
+    OpenInSystemBrowser      // Open in desktop browser
+};
+```
+
+### External Link Policy: Ask
+
+When set to `Ask`, displays a dialog with:
+- URL being accessed
+- Options: "Open in Desktop Browser", "Open in Zeal", "Cancel"
+- "Do not ask again" checkbox to save preference
+
+**Example Dialog:**
+```
+How do you want to open the external link?
+URL: https://example.com
+
+[✓] Do not ask again
+
+[Open in Desktop Browser] [Open in Zeal] [Cancel]
+```
+
+## JavaScript Console Logging
+
+### javaScriptConsoleMessage()
+
+```cpp
+void javaScriptConsoleMessage(QWebEnginePage::JavaScriptConsoleMessageLevel level,
+                             const QString &message,
+                             int lineNumber,
+                             const QString &sourceId) override;
+```
+
+Handles JavaScript console messages from the web page, forwarding them to Qt's logging system.
+
+**Parameters:**
+- `level` - Message severity (Info, Warning, Error)
+- `message` - Console message text
+- `lineNumber` - Line number where message originated
+- `sourceId` - Source file/script identifier
+
+**Behavior:**
+- Routes to `zeal.browser.webpage` logging category
+- Format: `[level] [sourceId:lineNumber] message`
+- Useful for debugging documentation rendering issues
+
+**Example Output:**
+```
+QtInfoMsg [qrc:///browser/main.js:42] Documentation loaded
+QtWarningMsg [qrc:///browser/search.js:15] Search index not ready
+```
+
+## Qt WebEngine Integration
+
+### WebChannel Support
+
+While WebPage itself doesn't directly manage the WebChannel, it's typically configured with a [WebBridge](/api/browser/webbridge) instance through `setWebChannel()`:
+
+```cpp
+QWebChannel *channel = new QWebChannel(page);
+channel->registerObject("zAppBridge", webBridgeObject);
+page->setWebChannel(channel);
+```
+
+This enables JavaScript to C++ communication via the `qt.webChannelTransport` API.
+
+### Profile Configuration
+
+The WebPage uses a shared profile that configures:
+- **Cache Location**: For offline documentation access
+- **Persistent Cookies**: For documentation site preferences
+- **User Agent**: Identifies Zeal to documentation servers
+
+## Usage Examples
+
+### Basic Usage
+
+```cpp
+#include <browser/webpage.h>
+#include <browser/webview.h>
+
+// Create a web view with custom page
+auto *webView = new Zeal::Browser::WebView(parent);
+// WebView automatically creates and uses a WebPage instance
+
+// Load local documentation
+webView->load(QUrl("qrc:///browser/zealdocs.html"));
+```
+
+### Handling Navigation Requests
+
+The navigation logic automatically handles different scenarios:
+
+```cpp
+// Local documentation - always allowed
+webView->load(QUrl("qrc:///docsets/Python/index.html"));
+
+// External link - controlled by user preference
+webView->load(QUrl("https://docs.python.org"));
+// May open in Zeal, system browser, or show dialog based on settings
+
+// External resource in iframe - blocked on local pages
+// <iframe src="https://tracking.example.com"> - blocked
+```
+
+### Monitoring JavaScript Console
+
+Enable debug logging to see JavaScript console messages:
+
+```cpp
+QLoggingCategory::setFilterRules("zeal.browser.webpage.debug=true");
+
+// Now JavaScript console.log(), console.warn(), console.error() 
+// will appear in Qt debug output
+```
+
+## Security Considerations
+
+### Protection Against External Resources
+
+The `acceptNavigationRequest()` implementation provides important security features:
+
+1. **Prevents Tracking**: Blocks external scripts and images on local documentation
+2. **User Control**: Configurable policy for external navigation
+3. **Transparent Logging**: Debug logs show all blocked requests
+
+### Implementation Details
+
+From webpage.cpp:29:
+```cpp
+bool WebPage::acceptNavigationRequest(const QUrl &requestUrl, 
+                                     QWebEnginePage::NavigationType type,
+                                     bool isMainFrame)
+{
+    // Local elements are always allowed
+    if (Core::NetworkAccessManager::isLocalUrl(requestUrl)) {
+        return true;
+    }
+
+    // Allow external resources if already on an external page
+    const QUrl pageUrl = url();
+    if (pageUrl.isValid() && !Core::NetworkAccessManager::isLocalUrl(pageUrl)) {
+        return true;
+    }
+
+    // Block external elements on local pages
+    if (!isMainFrame) {
+        qCDebug(log, "Blocked request to '%s'.", qPrintable(requestUrl.toString()));
+        return false;
+    }
+
+    // Handle main frame external navigation based on user policy
+    // ...
+}
+```
+
+## Implementation Files
+
+- **Header**: [src/libs/browser/webpage.h](https://github.com/zealdocs/zeal/blob/main/src/libs/browser/webpage.h)
+- **Implementation**: [src/libs/browser/webpage.cpp](https://github.com/zealdocs/zeal/blob/main/src/libs/browser/webpage.cpp)
+
+## See Also
+
+- [WebView](/api/browser/webview) - Widget that uses WebPage for rendering
+- [WebBridge](/api/browser/webbridge) - JavaScript to C++ communication bridge
+- [Qt WebEnginePage Documentation](https://doc.qt.io/qt-6/qwebenginepage.html)
+- Core::NetworkAccessManager - URL validation utilities

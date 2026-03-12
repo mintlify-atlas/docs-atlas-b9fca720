@@ -1,0 +1,193 @@
+---
+title: Command Line
+description: Launch Zeal with queries and control behavior via command-line arguments
+---
+
+Zeal supports command-line arguments for automation, scripting, and integration with other tools.
+
+## Basic Usage
+
+```bash
+zeal [options] [url]
+```
+
+## Options
+
+### General Options
+
+<ParamField query="--help" type="flag">
+  Display help information and exit
+</ParamField>
+
+<ParamField query="--version" type="flag">
+  Display version information and exit
+</ParamField>
+
+<ParamField query="--minimized" type="flag">
+  Start minimized regardless of settings
+  
+  Useful for starting Zeal in the background at system startup.
+</ParamField>
+
+### Windows-Specific Options
+
+<ParamField query="--attach-console" type="flag">
+  Attach console for logging (Windows only)
+  
+  Redirects output to the parent console window for debugging.
+</ParamField>
+
+<ParamField query="--register" type="flag">
+  Register protocol handlers (Windows only)
+  
+  Registers `dash://` and `dash-plugin://` URL schemes with the system.
+  
+  ```bash
+  zeal --register
+  ```
+</ParamField>
+
+<ParamField query="--unregister" type="flag">
+  Unregister protocol handlers (Windows only)
+  
+  Removes `dash://` and `dash-plugin://` URL scheme registrations.
+  
+  ```bash
+  zeal --unregister
+  ```
+</ParamField>
+
+<Warning>
+  The `--register` and `--unregister` options cannot be used together.
+</Warning>
+
+## Positional Arguments
+
+### URL Parameter
+
+You can pass a search query or URL as a positional argument:
+
+```bash
+zeal "python:print"
+```
+
+Supported URL schemes:
+- Plain text queries
+- `dash://` URLs
+- `dash-plugin://` URLs
+
+See [Protocol Handlers](/advanced/protocol-handlers) for details on URL schemes.
+
+## Examples
+
+### Search for Documentation
+
+Search for "string" in Python documentation:
+
+```bash
+zeal "python:string"
+```
+
+Search across multiple docsets:
+
+```bash
+zeal "python,django:models"
+```
+
+### Start Minimized
+
+Launch Zeal minimized to system tray:
+
+```bash
+zeal --minimized
+```
+
+### Use Protocol Handlers
+
+Open documentation using the `dash://` protocol:
+
+```bash
+zeal "dash://python:print"
+```
+
+Use `dash-plugin://` with parameters:
+
+```bash
+zeal "dash-plugin://keys=python&query=print"
+```
+
+### Windows Protocol Registration
+
+Register URL handlers on Windows:
+
+```powershell
+zeal.exe --register
+```
+
+This allows you to open Zeal URLs from browsers and other applications:
+
+```html
+<a href="dash://python:pprint">Python pprint documentation</a>
+```
+
+## Integration Examples
+
+### Shell Alias
+
+Create a shell alias for quick documentation lookup:
+
+```bash
+# In .bashrc or .zshrc
+alias zdoc='zeal'
+
+# Usage
+zdoc "javascript:array.map"
+```
+
+### Desktop Launcher
+
+Create a custom desktop launcher with a specific query:
+
+```ini
+[Desktop Entry]
+Type=Application
+Name=Zeal Python Docs
+Exec=zeal "python:"
+Icon=zeal
+Terminal=false
+```
+
+### Script Integration
+
+Use Zeal in scripts for documentation lookup:
+
+```bash
+#!/bin/bash
+# Open documentation for a command
+
+if [ -z "$1" ]; then
+  echo "Usage: $0 <command>"
+  exit 1
+fi
+
+zeal "bash:$1" &
+```
+
+## Multiple Instances
+
+Zeal enforces single-instance behavior. When you run Zeal while another instance is already running:
+
+1. The command-line arguments are sent to the existing instance
+2. The existing window is activated (unless `prevent_activation=true` is set in `dash-plugin://` URLs)
+3. The new process exits
+
+This ensures a consistent user experience and prevents multiple windows from opening unnecessarily.
+
+## Exit Codes
+
+- `0` - Success
+- `1` - Failure (e.g., invalid arguments, failed to send message to primary instance)
+
+<Note>
+  Command-line arguments are processed before the GUI is shown, making Zeal suitable for automated workflows and IDE integration.
+</Note>

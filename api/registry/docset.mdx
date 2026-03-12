@@ -1,0 +1,351 @@
+---
+title: Docset
+description: API reference for the Zeal::Registry::Docset class
+---
+
+# Docset
+
+The `Docset` class represents a single documentation set in Zeal. It handles loading docset metadata, managing symbols, and performing searches within the docset.
+
+## Header
+
+```cpp
+#include <registry/docset.h>
+```
+
+## Namespace
+
+```cpp
+Zeal::Registry::Docset
+```
+
+## Constructor
+
+### Docset()
+
+```cpp
+explicit Docset(QString path)
+```
+
+Creates a new docset instance from the given path.
+
+**Parameters:**
+- `path` - The file system path to the docset directory
+
+**Example:**
+```cpp
+auto docset = new Zeal::Registry::Docset("/path/to/docsets/Python.docset");
+if (docset->isValid()) {
+    qDebug() << "Loaded docset:" << docset->title();
+}
+```
+
+## Validation
+
+### isValid()
+
+```cpp
+bool isValid() const
+```
+
+Checks if the docset was loaded successfully and is valid.
+
+**Returns:** `true` if the docset is valid, `false` otherwise
+
+## Metadata Methods
+
+### name()
+
+```cpp
+QString name() const
+```
+
+Returns the internal name of the docset (e.g., "python").
+
+**Returns:** The docset name
+
+### title()
+
+```cpp
+QString title() const
+```
+
+Returns the display title of the docset (e.g., "Python 3").
+
+**Returns:** The docset title
+
+### keywords()
+
+```cpp
+QStringList keywords() const
+```
+
+Returns the list of keywords that can be used to filter searches to this docset.
+
+**Returns:** List of docset keywords
+
+**Example:**
+```cpp
+QStringList keywords = docset->keywords();
+// Use keywords for search filtering: "python:list" or "py:dict"
+```
+
+### version()
+
+```cpp
+QString version() const
+```
+
+Returns the version string of the documentation.
+
+**Returns:** The docset version
+
+### revision()
+
+```cpp
+int revision() const
+```
+
+Returns the revision number of the docset.
+
+**Returns:** The docset revision
+
+### feedUrl()
+
+```cpp
+QString feedUrl() const
+```
+
+Returns the URL of the docset feed for updates.
+
+**Returns:** The feed URL string
+
+## Path and Resource Methods
+
+### path()
+
+```cpp
+QString path() const
+```
+
+Returns the file system path to the docset directory.
+
+**Returns:** The docset path
+
+### documentPath()
+
+```cpp
+QString documentPath() const
+```
+
+Returns the path to the documentation files within the docset.
+
+**Returns:** The document path
+
+### icon()
+
+```cpp
+QIcon icon() const
+```
+
+Returns the icon for this docset.
+
+**Returns:** The docset icon
+
+### symbolTypeIcon()
+
+```cpp
+QIcon symbolTypeIcon(const QString &symbolType) const
+```
+
+Returns the icon for a specific symbol type (e.g., "Class", "Method", "Function").
+
+**Parameters:**
+- `symbolType` - The type of symbol
+
+**Returns:** The icon for the symbol type
+
+### indexFileUrl()
+
+```cpp
+QUrl indexFileUrl() const
+```
+
+Returns the URL of the index/home page for this docset.
+
+**Returns:** The index file URL
+
+## Symbol Methods
+
+### symbolCounts()
+
+```cpp
+QMap<QString, int> symbolCounts() const
+```
+
+Returns a map of symbol types to their counts in this docset.
+
+**Returns:** Map of symbol type names to counts
+
+**Example:**
+```cpp
+QMap<QString, int> counts = docset->symbolCounts();
+for (auto it = counts.begin(); it != counts.end(); ++it) {
+    qDebug() << it.key() << ":" << it.value();
+}
+// Output: "Class: 150", "Method: 2340", "Function: 890", etc.
+```
+
+### symbolCount()
+
+```cpp
+int symbolCount(const QString &symbolType) const
+```
+
+Returns the count of symbols for a specific type.
+
+**Parameters:**
+- `symbolType` - The type of symbol to count
+
+**Returns:** The number of symbols of that type
+
+### symbols()
+
+```cpp
+const QMultiMap<QString, QUrl> &symbols(const QString &symbolType) const
+```
+
+Returns all symbols of a given type as a multi-map of symbol names to URLs.
+
+**Parameters:**
+- `symbolType` - The type of symbols to retrieve
+
+**Returns:** Multi-map of symbol names to their documentation URLs
+
+## Search Methods
+
+### search()
+
+```cpp
+QList<SearchResult> search(const QString &query, const CancellationToken &token) const
+```
+
+Performs a search within this docset for the given query.
+
+**Parameters:**
+- `query` - The search query string
+- `token` - Cancellation token to allow aborting the search
+
+**Returns:** List of search results
+
+**Example:**
+```cpp
+CancellationToken token;
+QList<SearchResult> results = docset->search("string", token);
+for (const auto &result : results) {
+    qDebug() << result.name << "-" << result.type;
+}
+```
+
+### relatedLinks()
+
+```cpp
+QList<SearchResult> relatedLinks(const QUrl &url) const
+```
+
+Finds related documentation links for a given URL.
+
+**Parameters:**
+- `url` - The URL to find related links for
+
+**Returns:** List of related search results
+
+### searchResultUrl()
+
+```cpp
+QUrl searchResultUrl(const SearchResult &result) const
+```
+
+Creates a complete URL from a search result.
+
+**Parameters:**
+- `result` - The search result to create a URL for
+
+**Returns:** The complete documentation URL
+
+## Base URL Methods
+
+### baseUrl()
+
+```cpp
+QUrl baseUrl() const
+```
+
+Returns the base URL for this docset (useful for remote/online docsets).
+
+**Returns:** The base URL
+
+### setBaseUrl()
+
+```cpp
+void setBaseUrl(const QUrl &baseUrl)
+```
+
+Sets the base URL for this docset.
+
+**Parameters:**
+- `baseUrl` - The base URL to set
+
+## Search Settings
+
+### isFuzzySearchEnabled()
+
+```cpp
+bool isFuzzySearchEnabled() const
+```
+
+Checks if fuzzy search is enabled for this docset.
+
+**Returns:** `true` if fuzzy search is enabled
+
+### setFuzzySearchEnabled()
+
+```cpp
+void setFuzzySearchEnabled(bool enabled)
+```
+
+Enables or disables fuzzy search for this docset.
+
+**Parameters:**
+- `enabled` - Whether to enable fuzzy search
+
+**Example:**
+```cpp
+docset->setFuzzySearchEnabled(true);
+// Now searches will be more lenient with typos
+```
+
+### isJavaScriptEnabled()
+
+```cpp
+bool isJavaScriptEnabled() const
+```
+
+Checks if JavaScript is enabled for viewing this docset's documentation.
+
+**Returns:** `true` if JavaScript is enabled
+
+## Public Members
+
+### hasUpdate
+
+```cpp
+bool hasUpdate = false
+```
+
+Indicates whether an update is available for this docset. This is a temporary workaround before a proper docset sources implementation.
+
+## Related Classes
+
+- [SearchResult](/api/registry/search) - Result structure returned by search methods
+- [DocsetRegistry](/api/registry/docset-registry) - Registry for managing multiple docsets

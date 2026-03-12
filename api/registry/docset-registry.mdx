@@ -1,0 +1,420 @@
+---
+title: DocsetRegistry
+description: API reference for the Zeal::Registry::DocsetRegistry class
+---
+
+# DocsetRegistry
+
+The `DocsetRegistry` class manages a collection of docsets. It handles loading/unloading docsets, performing searches across all docsets, and emitting signals when docsets change.
+
+## Header
+
+```cpp
+#include <registry/docsetregistry.h>
+```
+
+## Namespace
+
+```cpp
+Zeal::Registry::DocsetRegistry
+```
+
+## Inheritance
+
+```cpp
+class DocsetRegistry : public QObject
+```
+
+## Constructor
+
+### DocsetRegistry()
+
+```cpp
+explicit DocsetRegistry(QObject *parent = nullptr)
+```
+
+Creates a new docset registry.
+
+**Parameters:**
+- `parent` - Optional parent QObject
+
+**Example:**
+```cpp
+auto registry = new Zeal::Registry::DocsetRegistry();
+registry->setStoragePath("/path/to/docsets");
+```
+
+## Model Access
+
+### model()
+
+```cpp
+QAbstractItemModel *model() const
+```
+
+Returns the item model representing the docsets in this registry. Useful for displaying docsets in Qt views.
+
+**Returns:** Pointer to the abstract item model
+
+**Example:**
+```cpp
+QListView *listView = new QListView();
+listView->setModel(registry->model());
+```
+
+## Storage Path
+
+### storagePath()
+
+```cpp
+QString storagePath() const
+```
+
+Returns the directory path where docsets are stored.
+
+**Returns:** The storage path
+
+### setStoragePath()
+
+```cpp
+void setStoragePath(const QString &path)
+```
+
+Sets the directory path where docsets are stored and loads all docsets from that location.
+
+**Parameters:**
+- `path` - The directory path containing docsets
+
+**Example:**
+```cpp
+registry->setStoragePath(QDir::homePath() + "/.local/share/Zeal/docsets");
+```
+
+## Fuzzy Search Settings
+
+### isFuzzySearchEnabled()
+
+```cpp
+bool isFuzzySearchEnabled() const
+```
+
+Checks if fuzzy search is enabled for all docsets.
+
+**Returns:** `true` if fuzzy search is enabled
+
+### setFuzzySearchEnabled()
+
+```cpp
+void setFuzzySearchEnabled(bool enabled)
+```
+
+Enables or disables fuzzy search for all docsets in the registry.
+
+**Parameters:**
+- `enabled` - Whether to enable fuzzy search
+
+**Example:**
+```cpp
+registry->setFuzzySearchEnabled(true);
+// All searches will now be more lenient with typos
+```
+
+## Docset Query Methods
+
+### count()
+
+```cpp
+int count() const
+```
+
+Returns the number of loaded docsets.
+
+**Returns:** The docset count
+
+### contains()
+
+```cpp
+bool contains(const QString &name) const
+```
+
+Checks if a docset with the given name is loaded.
+
+**Parameters:**
+- `name` - The docset name to check
+
+**Returns:** `true` if the docset exists
+
+**Example:**
+```cpp
+if (registry->contains("python")) {
+    qDebug() << "Python docset is loaded";
+}
+```
+
+### names()
+
+```cpp
+QStringList names() const
+```
+
+Returns a list of all loaded docset names.
+
+**Returns:** List of docset names
+
+**Example:**
+```cpp
+QStringList names = registry->names();
+for (const QString &name : names) {
+    qDebug() << "Loaded:" << name;
+}
+```
+
+## Docset Management
+
+### loadDocset()
+
+```cpp
+void loadDocset(const QString &path)
+```
+
+Loads a docset from the specified path.
+
+**Parameters:**
+- `path` - File system path to the docset
+
+**Example:**
+```cpp
+registry->loadDocset("/path/to/Python.docset");
+// Emits docsetLoaded("python") signal when complete
+```
+
+### unloadDocset()
+
+```cpp
+void unloadDocset(const QString &name)
+```
+
+Unloads a docset with the given name.
+
+**Parameters:**
+- `name` - The name of the docset to unload
+
+**Example:**
+```cpp
+registry->unloadDocset("python");
+// Emits docsetAboutToBeUnloaded("python") then docsetUnloaded("python")
+```
+
+### unloadAllDocsets()
+
+```cpp
+void unloadAllDocsets()
+```
+
+Unloads all currently loaded docsets.
+
+**Example:**
+```cpp
+registry->unloadAllDocsets();
+// All docsets are removed from the registry
+```
+
+## Docset Access
+
+### docset() (by name)
+
+```cpp
+Docset *docset(const QString &name) const
+```
+
+Returns a pointer to the docset with the given name.
+
+**Parameters:**
+- `name` - The docset name
+
+**Returns:** Pointer to the docset, or `nullptr` if not found
+
+**Example:**
+```cpp
+Docset *pythonDocset = registry->docset("python");
+if (pythonDocset) {
+    qDebug() << "Version:" << pythonDocset->version();
+}
+```
+
+### docset() (by index)
+
+```cpp
+Docset *docset(int index) const
+```
+
+Returns a pointer to the docset at the given index.
+
+**Parameters:**
+- `index` - The index of the docset
+
+**Returns:** Pointer to the docset, or `nullptr` if index is invalid
+
+### docsetForUrl()
+
+```cpp
+Docset *docsetForUrl(const QUrl &url)
+```
+
+Finds the docset that contains documentation for the given URL.
+
+**Parameters:**
+- `url` - The documentation URL
+
+**Returns:** Pointer to the docset, or `nullptr` if not found
+
+**Example:**
+```cpp
+QUrl docUrl("file:///path/to/docsets/Python.docset/Contents/Resources/Documents/library/string.html");
+Docset *docset = registry->docsetForUrl(docUrl);
+if (docset) {
+    qDebug() << "URL belongs to:" << docset->title();
+}
+```
+
+### docsets()
+
+```cpp
+QList<Docset *> docsets() const
+```
+
+Returns a list of all loaded docsets.
+
+**Returns:** List of docset pointers
+
+**Example:**
+```cpp
+for (Docset *docset : registry->docsets()) {
+    qDebug() << docset->name() << "-" << docset->version();
+}
+```
+
+## Search Methods
+
+### search()
+
+```cpp
+void search(const QString &query)
+```
+
+Performs an asynchronous search across all loaded docsets. Results are emitted via the `searchCompleted` signal.
+
+**Parameters:**
+- `query` - The search query string (may include docset filters like "python:list")
+
+**Example:**
+```cpp
+connect(registry, &DocsetRegistry::searchCompleted,
+        [](const QList<SearchResult> &results) {
+    qDebug() << "Found" << results.size() << "results";
+});
+
+registry->search("string");
+```
+
+### queryResults()
+
+```cpp
+const QList<SearchResult> &queryResults()
+```
+
+Returns the results from the most recent search.
+
+**Returns:** List of search results
+
+**Example:**
+```cpp
+registry->search("list");
+// Wait for searchCompleted signal...
+const QList<SearchResult> &results = registry->queryResults();
+```
+
+## Signals
+
+### docsetLoaded
+
+```cpp
+void docsetLoaded(const QString &name)
+```
+
+Emitted when a docset has been successfully loaded.
+
+**Parameters:**
+- `name` - The name of the loaded docset
+
+**Example:**
+```cpp
+connect(registry, &DocsetRegistry::docsetLoaded,
+        [](const QString &name) {
+    qDebug() << "Docset loaded:" << name;
+});
+```
+
+### docsetAboutToBeUnloaded
+
+```cpp
+void docsetAboutToBeUnloaded(const QString &name)
+```
+
+Emitted just before a docset is unloaded. Use this to clean up any references to the docset.
+
+**Parameters:**
+- `name` - The name of the docset being unloaded
+
+### docsetUnloaded
+
+```cpp
+void docsetUnloaded(const QString &name)
+```
+
+Emitted after a docset has been unloaded.
+
+**Parameters:**
+- `name` - The name of the unloaded docset
+
+**Example:**
+```cpp
+connect(registry, &DocsetRegistry::docsetAboutToBeUnloaded,
+        [](const QString &name) {
+    qDebug() << "About to unload:" << name;
+});
+
+connect(registry, &DocsetRegistry::docsetUnloaded,
+        [](const QString &name) {
+    qDebug() << "Unloaded:" << name;
+});
+```
+
+### searchCompleted
+
+```cpp
+void searchCompleted(const QList<SearchResult> &results)
+```
+
+Emitted when an asynchronous search has completed.
+
+**Parameters:**
+- `results` - The list of search results
+
+**Example:**
+```cpp
+connect(registry, &DocsetRegistry::searchCompleted,
+        [](const QList<SearchResult> &results) {
+    for (const auto &result : results) {
+        qDebug() << result.docset->title() << ":" << result.name;
+    }
+});
+
+registry->search("python:list");
+```
+
+## Related Classes
+
+- [Docset](/api/registry/docset) - Individual docset class
+- [SearchResult](/api/registry/search) - Search result structure
+- [SearchQuery](/api/registry/search) - Search query parser

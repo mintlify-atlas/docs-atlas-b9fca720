@@ -1,0 +1,306 @@
+---
+title: "MainWindow"
+description: "Main application window for the Zeal documentation browser"
+icon: "window"
+---
+
+## Overview
+
+The `MainWindow` class (`Zeal::WidgetUi::MainWindow`) is the primary application window for Zeal. It inherits from `QMainWindow` and manages the overall application UI, including tabs, menu bar, sidebar, and web view stack.
+
+**Header:** `src/libs/ui/mainwindow.h`
+
+**Namespace:** `Zeal::WidgetUi`
+
+## Constructor
+
+```cpp
+explicit MainWindow(Core::Application *app, QWidget *parent = nullptr);
+```
+
+Creates the main window with the given application instance and optional parent widget.
+
+**Parameters:**
+- `app` - Pointer to the Core::Application instance
+- `parent` - Optional parent widget (defaults to nullptr)
+
+**Behavior:**
+- Sets window title to "Zeal" (or "Zeal Portable" for portable builds)
+- Sets default size to 900x600 pixels
+- Initializes menu bar, shortcuts, and tab bar
+- Creates central widget with splitter layout
+- Restores saved window geometry from settings
+- Connects to application update check signals
+
+## Destructor
+
+```cpp
+~MainWindow() override;
+```
+
+Saves window geometry and splitter state to settings before destruction.
+
+## Public Methods
+
+### search
+
+```cpp
+void search(const Registry::SearchQuery &query);
+```
+
+Performs a search in the current tab.
+
+**Parameters:**
+- `query` - The search query to execute
+
+**Reference:** `src/libs/ui/mainwindow.cpp:147`
+
+### bringToFront
+
+```cpp
+void bringToFront();
+```
+
+Brings the main window to front, activates it, and focuses the search edit.
+
+**Behavior:**
+- Shows the window if hidden
+- Clears minimized state and sets window active
+- Raises window to front
+- Activates the window
+- Focuses the search edit in the current tab
+
+**Reference:** `src/libs/ui/mainwindow.cpp:625`
+
+### createTab
+
+```cpp
+BrowserTab *createTab();
+```
+
+Creates and adds a new browser tab.
+
+**Returns:** Pointer to the newly created `BrowserTab`
+
+**Behavior:**
+- Creates a new `BrowserTab` instance
+- Navigates to the start page
+- Adds the tab to the window
+
+**Reference:** `src/libs/ui/mainwindow.cpp:184`
+
+## Public Slots
+
+### toggleWindow
+
+```cpp
+void toggleWindow();
+```
+
+Toggles window visibility between shown/hidden or active/minimized.
+
+**Behavior:**
+- If window is not visible or not active (when called from global shortcut), brings it to front
+- Otherwise, either hides to tray (if tray icon exists) or minimizes the window
+
+**Reference:** `src/libs/ui/mainwindow.cpp:744`
+
+## Signals
+
+### currentTabChanged
+
+```cpp
+void currentTabChanged();
+```
+
+Emitted when the active tab changes.
+
+## Protected Methods
+
+### changeEvent
+
+```cpp
+void changeEvent(QEvent *event) override;
+```
+
+Handles window state changes. Hides window to system tray when minimized if configured.
+
+### closeEvent
+
+```cpp
+void closeEvent(QCloseEvent *event) override;
+```
+
+Handles window close events. If "hide on close" is enabled with system tray, ignores the close event and toggles window instead.
+
+### eventFilter
+
+```cpp
+bool eventFilter(QObject *object, QEvent *event) override;
+```
+
+Filters events for tab bar and menu bar:
+- **Tab bar:** Handles middle-click to close tabs, blocks mouse wheel events
+- **Menu bar:** Auto-hides menu bar on focus loss or Escape key when in auto-hide mode
+
+### keyPressEvent
+
+```cpp
+void keyPressEvent(QKeyEvent *keyEvent) override;
+```
+
+Handles global keyboard shortcuts:
+- **Escape:** Focuses search edit and clears query
+- **?:** Focuses search edit
+
+## Private Slots
+
+### applySettings
+
+```cpp
+void applySettings();
+```
+
+Applies settings changes, including global shortcut updates and system tray visibility.
+
+**Reference:** `src/libs/ui/mainwindow.cpp:732`
+
+### closeTab
+
+```cpp
+void closeTab(int index = -1);
+```
+
+Closes the tab at the specified index (or current tab if index is -1).
+
+**Reference:** `src/libs/ui/mainwindow.cpp:154`
+
+### moveTab
+
+```cpp
+void moveTab(int from, int to);
+```
+
+Moves a tab from one index to another.
+
+**Reference:** `src/libs/ui/mainwindow.cpp:176`
+
+### duplicateTab
+
+```cpp
+void duplicateTab(int index);
+```
+
+Duplicates the tab at the specified index, placing the new tab adjacent to it.
+
+**Reference:** `src/libs/ui/mainwindow.cpp:192`
+
+## UI Components
+
+The main window contains several key UI components:
+
+### Menu Bar
+
+Managed by `setupMainMenu()`, includes:
+- **File Menu:** New Tab, Close Tab, Quit
+- **Edit Menu:** Find in Page, Preferences
+- **View Menu:** Toolbars (Menu Bar toggle) - not available on macOS
+- **Tools Menu:** Docsets Manager
+- **Help Menu:** Submit Feedback, Check for Updates, About
+
+**Reference:** `src/libs/ui/mainwindow.cpp:249`
+
+### Tab Bar
+
+Managed by `setupTabBar()`, features:
+- Document mode styling
+- Tab width of 150 pixels
+- Movable and closable tabs
+- Keyboard shortcuts (Alt+1 through Alt+9 on Linux, Ctrl+1-9 on other platforms)
+- Middle-click to close
+- Double-click empty area to create new tab
+
+**Reference:** `src/libs/ui/mainwindow.cpp:525`
+
+### Splitter Layout
+
+The main window uses a horizontal splitter with:
+- **Left side:** Sidebar container with search sidebar
+- **Right side:** Stacked widget containing browser tabs
+
+### Keyboard Shortcuts
+
+Managed by `setupShortcuts()`, includes:
+- **Ctrl+K / Ctrl+L:** Focus search edit
+- **Ctrl+Alt+T:** Duplicate current tab
+- **Ctrl+B:** Toggle sidebar visibility
+- **Ctrl+Tab / Ctrl+PageDown:** Next tab
+- **Ctrl+Shift+Tab / Ctrl+PageUp:** Previous tab
+- **Browser navigation:** Back, Forward, Zoom In/Out, Reset Zoom
+- **Global shortcut:** Configurable hotkey to toggle window (if supported)
+
+**Reference:** `src/libs/ui/mainwindow.cpp:422`
+
+### System Tray Integration
+
+When enabled in settings:
+- System tray icon with context menu
+- Click tray icon to toggle window visibility
+- "Show Zeal" / "Minimize to Tray" menu item
+- Quit action
+
+**Reference:** `src/libs/ui/mainwindow.cpp:583`
+
+## Member Variables
+
+- `m_application` - Core application instance
+- `m_settings` - Settings instance
+- `m_webBridge` - Bridge for web content communication
+- `m_globalShortcut` - Global keyboard shortcut handler (if supported)
+- `m_menuBar` - Main menu bar
+- `m_tabBar` - Tab bar widget
+- `m_splitter` - Horizontal splitter for sidebar and content
+- `m_webViewStack` - Stacked widget containing browser tabs
+- `m_trayIcon` - System tray icon (when enabled)
+
+## Integration with Other Components
+
+### BrowserTab
+
+Each tab is a `BrowserTab` instance that contains:
+- Web view for displaying documentation
+- Search sidebar for navigation
+- Tab-specific state and history
+
+### SearchSidebar
+
+The sidebar is integrated via `SidebarViewProvider` and `Sidebar::Container`:
+- Provides search interface
+- Displays docset tree and search results
+- Integrates with global search functionality
+
+### Settings
+
+The window responds to settings changes via the `applySettings()` slot:
+- Global shortcut updates
+- System tray visibility
+- Menu bar visibility
+- Tab behavior
+
+## Example Usage
+
+```cpp
+// Create main window
+Core::Application *app = Core::Application::instance();
+MainWindow *mainWindow = new MainWindow(app);
+
+// Perform search
+Registry::SearchQuery query("QWidget");
+mainWindow->search(query);
+
+// Create new tab
+BrowserTab *tab = mainWindow->createTab();
+
+// Show window
+mainWindow->show();
+```

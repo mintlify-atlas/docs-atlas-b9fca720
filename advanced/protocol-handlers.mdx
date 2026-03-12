@@ -1,0 +1,401 @@
+---
+title: Protocol Handlers
+description: Integrate Zeal with IDEs and browsers using dash:// and dash-plugin:// URL schemes
+---
+
+Zeal supports custom URL schemes for deep linking and IDE integration, compatible with the Dash URL protocols.
+
+## Supported Protocols
+
+Zeal implements two URL schemes:
+
+<CardGroup cols={2}>
+  <Card title="dash://" icon="link">
+    Simple protocol for basic search queries
+  </Card>
+  <Card title="dash-plugin://" icon="puzzle-piece">
+    Advanced protocol with parameters for IDE integration
+  </Card>
+</CardGroup>
+
+## dash:// Protocol
+
+The `dash://` protocol provides a simple way to search documentation.
+
+### Syntax
+
+```
+dash://[query]
+```
+
+### Examples
+
+<CodeGroup>
+```bash Basic Search
+dash://string
+```
+
+```bash Scoped Search
+dash://python:pprint
+```
+
+```bash Multiple Docsets
+dash://python,django:models
+```
+</CodeGroup>
+
+### URL Variations
+
+Zeal accepts different URL formats:
+
+```bash
+dash://query
+dash:query
+dash:///query
+```
+
+All variations are treated identically after parsing.
+
+## dash-plugin:// Protocol
+
+The `dash-plugin://` protocol supports advanced parameters for IDE integration.
+
+### Syntax
+
+```
+dash-plugin://[?keys=<keywords>&query=<query>&prevent_activation=<bool>]
+```
+
+### Parameters
+
+<ParamField query="keys" type="string">
+  Comma-separated list of docset keywords to search
+  
+  Example: `keys=python,django`
+</ParamField>
+
+<ParamField query="query" type="string">
+  Search query string
+  
+  Example: `query=pprint`
+</ParamField>
+
+<ParamField query="prevent_activation" type="boolean" default="false">
+  Prevent Zeal window from being activated
+  
+  When `true`, Zeal updates the search results but doesn't bring the window to the foreground. Useful for background updates while coding.
+  
+  Example: `prevent_activation=true`
+</ParamField>
+
+### Examples
+
+<CodeGroup>
+```bash Simple Query
+dash-plugin://query=print
+```
+
+```bash Filtered Query
+dash-plugin://keys=python&query=print
+```
+
+```bash Background Update
+dash-plugin://keys=javascript&query=array.map&prevent_activation=true
+```
+
+```bash Multiple Docsets
+dash-plugin://keys=python,numpy,scipy&query=array
+```
+</CodeGroup>
+
+## Using Protocol Handlers
+
+### From Command Line
+
+You can invoke protocol handlers directly from the command line:
+
+```bash
+zeal "dash://python:pprint"
+```
+
+```bash
+zeal "dash-plugin://keys=javascript&query=setTimeout"
+```
+
+### From Web Browser
+
+Create clickable links in HTML:
+
+```html
+<a href="dash://python:print">Python print() documentation</a>
+```
+
+```html
+<a href="dash-plugin://keys=css&query=flexbox">CSS Flexbox Guide</a>
+```
+
+### From Applications
+
+Other applications can open Zeal URLs using system APIs:
+
+<CodeGroup>
+```python Python
+import webbrowser
+webbrowser.open('dash://python:requests')
+```
+
+```javascript JavaScript (Node.js)
+const { exec } = require('child_process');
+exec('xdg-open "dash://javascript:promise"');
+```
+
+```bash Shell
+xdg-open "dash://bash:awk"  # Linux
+open "dash://swift:string"  # macOS
+start "dash://cpp:vector"   # Windows
+```
+</CodeGroup>
+
+## Windows Registration
+
+On Windows, protocol handlers must be registered in the system registry.
+
+### Automatic Registration
+
+Use Zeal's built-in registration:
+
+```powershell
+zeal.exe --register
+```
+
+This creates registry entries for both `dash://` and `dash-plugin://` protocols.
+
+### Manual Registration
+
+The registration creates the following registry structure:
+
+```
+HKEY_CURRENT_USER\Software\Classes\dash
+HKEY_CURRENT_USER\Software\Classes\dash-plugin
+```
+
+Each protocol is registered with:
+- Default description
+- `URL Protocol` marker
+- Default icon
+- Command for opening URLs
+
+### Unregistration
+
+To remove protocol handlers:
+
+```powershell
+zeal.exe --unregister
+```
+
+<Warning>
+  Protocol handlers are registered per-user (HKEY_CURRENT_USER), not system-wide.
+</Warning>
+
+## IDE Integration
+
+Many IDEs and text editors support Dash protocol integration.
+
+### Visual Studio Code
+
+Install a Dash integration extension:
+
+1. Search for "Dash" in the Extensions marketplace
+2. Configure the extension to use Zeal
+3. Set the executable path to Zeal
+
+### Sublime Text
+
+Use the DashDoc plugin:
+
+1. Install via Package Control
+2. Configure for Zeal in settings:
+   ```json
+   {
+     "dash_app": "zeal"
+   }
+   ```
+
+### Vim/Neovim
+
+Use a plugin like vim-dasht or dash.vim:
+
+```vim
+" Example configuration
+nnoremap <silent> K :!zeal "<cword>" &<CR><CR>
+```
+
+### Emacs
+
+Use the zeal-at-point package:
+
+```elisp
+(global-set-key (kbd "C-c d") 'zeal-at-point)
+```
+
+### JetBrains IDEs
+
+Install the Dash plugin from the marketplace and configure it to use Zeal.
+
+## Advanced Integration
+
+### Context-Aware Search
+
+IDE plugins can detect the current programming language and automatically scope searches:
+
+```bash
+# Editing a Python file
+dash-plugin://keys=python&query=<selected_text>
+
+# Editing a JavaScript file
+dash-plugin://keys=javascript,nodejs&query=<selected_text>
+```
+
+### Background Updates
+
+For non-intrusive documentation lookup, use `prevent_activation=true`:
+
+```bash
+dash-plugin://keys=rust&query=Vec&prevent_activation=true
+```
+
+This updates the search in Zeal without stealing focus from your editor.
+
+### Custom Keybindings
+
+Bind a key in your IDE to open Zeal with the current selection:
+
+<Tabs>
+  <Tab title="VS Code">
+    ```json
+    {
+      "key": "ctrl+h",
+      "command": "extension.dash.specific",
+      "when": "editorTextFocus"
+    }
+    ```
+  </Tab>
+  <Tab title="Sublime Text">
+    ```json
+    {
+      "keys": ["ctrl+h"],
+      "command": "dash_doc"
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## URL Encoding
+
+Special characters in queries should be URL-encoded:
+
+```bash
+# Searching for "std::vector"
+dash://cpp:std%3A%3Avector
+
+# Searching for "array[index]"
+dash-plugin://query=array%5Bindex%5D
+```
+
+Zeal automatically decodes URL-encoded parameters.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Protocol not recognized (Windows)">
+    Run Zeal with administrator privileges and execute:
+    ```powershell
+    zeal.exe --register
+    ```
+    
+    Verify the registry entries exist in `HKEY_CURRENT_USER\Software\Classes\`.
+  </Accordion>
+  
+  <Accordion title="Browser doesn't open links">
+    - Check that protocol handlers are registered
+    - Some browsers require explicit permission for custom protocols
+    - Try opening the URL from command line first
+  </Accordion>
+  
+  <Accordion title="IDE integration not working">
+    - Verify Zeal is in your system PATH
+    - Check IDE plugin configuration
+    - Test protocol handlers manually from command line
+    - Ensure Zeal is not already running in single-instance mode
+  </Accordion>
+  
+  <Accordion title="Query not working as expected">
+    - Check URL encoding for special characters
+    - Verify docset keywords match installed docsets
+    - Test the query directly in Zeal's search box
+  </Accordion>
+</AccordionGroup>
+
+## Security Considerations
+
+Protocol handlers execute local applications, which can pose security risks:
+
+<Warning>
+  Be cautious when clicking protocol links from untrusted sources. Zeal itself doesn't execute arbitrary code, but malicious URLs could attempt to exploit vulnerabilities.
+</Warning>
+
+- Zeal only accepts safe query parameters
+- No file system access is granted through protocol URLs
+- Commands are not executed; only search queries are processed
+
+## Examples
+
+### Quick Reference Links
+
+Create a cheat sheet with quick links:
+
+```html
+<!DOCTYPE html>
+<html>
+<head><title>Dev Quick Links</title></head>
+<body>
+  <h1>Documentation Quick Links</h1>
+  <ul>
+    <li><a href="dash://python:requests">Python Requests</a></li>
+    <li><a href="dash://javascript:promise">JavaScript Promises</a></li>
+    <li><a href="dash://css:grid">CSS Grid</a></li>
+    <li><a href="dash://bash:awk">Bash AWK</a></li>
+  </ul>
+</body>
+</html>
+```
+
+### Shell Function
+
+Create a shell function for quick lookups:
+
+```bash
+# Add to .bashrc or .zshrc
+function zdoc() {
+  local docset="$1"
+  local query="$2"
+  zeal "dash://${docset}:${query}" &
+}
+
+# Usage
+zdoc python print
+zdoc javascript array.map
+```
+
+### Alfred/Raycast Integration
+
+Create custom workflows to search Zeal:
+
+```bash
+# Alfred workflow script
+zeal "dash-plugin://keys={query}&query={query}"
+```
+
+<Tip>
+  For best IDE integration, use `dash-plugin://` with the `prevent_activation` parameter to keep focus on your editor while updating search results.
+</Tip>
